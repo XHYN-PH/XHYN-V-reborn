@@ -1,5 +1,13 @@
 # Modification-source layout
 
+## 1.7.4 English test build
+
+The current [English modification layer](../modifications/english-1.7.4/README.md) contains a complete build driver for applying these changes to the exact privately supplied APK. It verifies input/tool hashes, compiles only the four new Java helpers, applies guarded language and presentation patches, assembles the APK, and runs host/ARM64 checks. Signed builds also run signature and final preservation audits. Signing keys are user-provided and never part of the public package.
+
+This is a binary patch/rebuild workflow, not compilation of the original game engine. See its README for commands, dependencies and license scope. Recorded output is in [verification/english-1.7.4](../verification/english-1.7.4). Android execution and gameplay still need a device.
+
+## Older 0.1 sources
+
 This repository publishes the modification layer for review. It is not a self-contained engine build or a complete APK rebuild kit.
 
 | Folder | Contents |
@@ -13,7 +21,7 @@ This repository publishes the modification layer for review. It is not a self-co
 
 The original scripts use a working directory named `reborn` and refer to a locally decoded base, earlier translation inputs and hash-pinned Android tools. Those private inputs are not part of this public repository. The scripts are preserved as used, so that their guards and integration changes can be inspected; cloning this repository alone does not produce the APK.
 
-The native patch is specific to the original engine SHA-256 documented in [SOURCE.md](SOURCE.md). It rejects other engine builds. Never copy these addresses to another APK or to the experimental native Vulkan engine.
+The native patch is specific to the original engine SHA-256 pinned in the old patch script and recorded verification files. It rejects other engine builds. Never copy these addresses to another APK or to the experimental native Vulkan engine.
 
 The verification used Java 17, Android API 36/D8/smali tools, Apktool 2.12.1, Zig 0.13.0, Python 3, pyelftools 0.33, Capstone 5.0.9, Unicorn 2.1.4 and Androguard 4.1.4. Tool metadata is in `modifications/toolchain-manifest.json` and `modifications/android-toolchain-manifest.json`.
 

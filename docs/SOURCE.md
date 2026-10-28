@@ -15,7 +15,9 @@ In XHYN V 0.1, the inspected payloads are ARM64 ELF shared libraries. The launch
 
 ## What source is included?
 
-The [modifications directory](../modifications) contains the Java helpers, JNI language bridge, exact-build patch/hook scripts, translation mapping, compile-only stubs and verification scripts used for our changes. They cover language selection, configuration, cache identity, display requests, session handling and diagnostics.
+The current [1.7.4 English modification layer](../modifications/english-1.7.4) includes four new Java helpers, guarded binary/UI patches, a build driver, translation data and host/native/package tests. Its new helper and tooling code is MIT licensed under the [documented scope](../modifications/english-1.7.4/PROVENANCE.md). It requires the exact privately supplied base APK and is not a complete game-engine source build. The [1.7.4 verification records](../verification/english-1.7.4) distinguish checks performed from untested Android behavior.
+
+The older [modifications directory](../modifications) contains the Java helpers, JNI language bridge, exact-build patch/hook scripts, translation mapping, compile-only stubs and verification scripts used for our changes. They cover language selection, configuration, cache identity, display requests, session handling and diagnostics.
 
 The [verification directory](../verification) contains package checks, native patch bytes/addresses, the language emulation matrix, regression checks and host-test output. These can help review our changes. They do not establish that gameplay works on a phone.
 
@@ -31,4 +33,4 @@ Upstream open-source component links are listed in [CREDITS.md](CREDITS.md). An 
 
 ## Source licensing
 
-Publication here permits inspection; it does not relicense GTA V, the game engine or third-party components. No blanket open-source license is claimed for the full APK. Existing third-party notices remain applicable. A native port still has copyright and dependency-license obligations; the word "native" does not remove them.
+The newly written code in `modifications/english-1.7.4` has an MIT license with explicit scope. Older materials retain their existing terms. Publication does not relicense GTA V, the game engine, original launcher, artwork, translation inputs or third-party components. No blanket open-source license is claimed for the full APK. Existing third-party notices remain applicable. A native port still has copyright and dependency-license obligations; the word "native" does not remove them.

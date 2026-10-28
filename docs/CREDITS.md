@@ -10,3 +10,5 @@
 - **[FFmpeg](https://ffmpeg.org)**, **[zlib-ng](https://github.com/zlib-ng/zlib-ng)** and other components — see the original retained notices and build notes.
 
 The [notices folder](../notices) contains the notices retained from the original Chinese Android port. Their presence is not a claim that the complete original dependency licensing or provenance has been independently verified. The proprietary engine source archive and original decompiled launcher source are not published.
+
+The new [1.7.4 English helper/tooling code](../modifications/english-1.7.4) is MIT licensed under its stated scope. Its translations use the earlier XHYN V English release as a reference. Readable model labels retain the supplied APK’s model identifiers. The maintainer requested removal of the outside black logo background; this does not assign a new license to the artwork.

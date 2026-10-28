@@ -1,0 +1,6 @@
+{
+  "Landroid/widget/ArrayAdapter;-><init>(Landroid/content/Context;ILjava/util/List;)V": 2,
+  "Landroid/graphics/Canvas;->drawText(Ljava/lang/String;FFLandroid/graphics/Paint;)V": 13,
+  "Landroid/graphics/Paint;->measureText(Ljava/lang/String;)F": 4,
+  "Landroid/widget/ArrayAdapter;-><init>(Landroid/content/Context;I[Ljava/lang/Object;)V": 1
+}

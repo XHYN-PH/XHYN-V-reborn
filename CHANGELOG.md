@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.4 English test build — 28 October 2026
+
+- Added an English presentation layer for the supplied 1.7.4-named APK, using the earlier English release as a reference.
+- Removed the exact engine’s Chinese system-language gate and selected English text archives/fonts.
+- Applied XHYN V branding and removed the outside black background from the purple V logo.
+- Preserved real file paths while translating surrounding text; kept command IDs, model IDs and parser matching inputs intact.
+- Published the new helper, patch, build and test code under a scoped MIT license, with translation data and verification records.
+- Added a fresh-directory build driver with pinned tool checks and optional private-key signing.
+
+7,093 host checks, 27 ARM64 instruction checks, APK preservation audits and signature verification passed. Android UI and gameplay are not device-tested. Some catalog names use readable model identifiers. The new app ID is `com.xhynph.xhynv.reborn174`; original signing identities and private data do not transfer.
+
 ## 0.1 — 16 October 2026
 
 Initial release of XHYN V Reborn, based on the Chinese GTA V Android port.

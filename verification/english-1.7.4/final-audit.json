@@ -1,0 +1,101 @@
+{
+  "result": "PASS",
+  "checks": 67922,
+  "file": "XHYN-V-1.7.4-English.apk",
+  "bytes": 88288229,
+  "sha256": "60d43f0c73da5647153ada2b3e5af7659e53ee79411a40e7e0a2ef5d72ebb586",
+  "metadata": {
+    "package": "com.xhynph.xhynv.reborn174",
+    "label": "XHYN V",
+    "version_name": "1.7.4-en",
+    "version_code": "84",
+    "min_sdk": "30",
+    "target_sdk": "36"
+  },
+  "original_classes": 2807,
+  "final_classes": 2814,
+  "final_method_signatures": 16479,
+  "dictionary_entries": 4454,
+  "only_changed_native_library": [
+    "lib/arm64-v8a/libgtav.so"
+  ],
+  "native_segment_alignments": {
+    "lib/arm64-v8a/libSDL3.so": [
+      16384,
+      16384,
+      16384,
+      16384
+    ],
+    "lib/arm64-v8a/libadrenotools.so": [
+      16384,
+      16384,
+      16384,
+      16384
+    ],
+    "lib/arm64-v8a/libdxvk_d3d11.so": [
+      16384,
+      16384,
+      16384,
+      16384
+    ],
+    "lib/arm64-v8a/libdxvk_dxgi.so": [
+      16384,
+      16384,
+      16384,
+      16384
+    ],
+    "lib/arm64-v8a/libfile_redirect_hook.so": [
+      16384,
+      16384,
+      16384
+    ],
+    "lib/arm64-v8a/libgsl_alloc_hook.so": [
+      16384,
+      16384,
+      16384
+    ],
+    "lib/arm64-v8a/libgtav.so": [
+      16384,
+      16384,
+      16384,
+      16384
+    ],
+    "lib/arm64-v8a/libgtav_bcn.so": [
+      16384,
+      16384,
+      16384,
+      16384
+    ],
+    "lib/arm64-v8a/libgtav_particle_probe.so": [
+      16384,
+      16384,
+      16384
+    ],
+    "lib/arm64-v8a/libgtav_vulkan.so": [
+      16384,
+      16384,
+      16384,
+      16384
+    ],
+    "lib/arm64-v8a/libgtavunrar.so": [
+      16384,
+      16384,
+      16384,
+      16384
+    ],
+    "lib/arm64-v8a/libhook_impl.so": [
+      16384,
+      16384,
+      16384,
+      16384
+    ],
+    "lib/arm64-v8a/libmain_hook.so": [
+      16384,
+      16384,
+      16384
+    ]
+  },
+  "device_gameplay_tested": false,
+  "android_ui_execution_tested": false,
+  "scope": "Structural, translation and preservation checks; not Android execution or gameplay"
+}

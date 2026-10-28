@@ -1,0 +1,37 @@
+# Android launch configuration. Choose resolution in the game's graphics menu.
+# input, overlay and aspect settings apply when closing the launcher menu; driver, HDR and fog-light changes apply on the next launch.
+# performance supports runtime changes. Do not create legacy switch files in the game root.
+# fit: preserve aspect ratio, center and letterbox; stretch: fill the display.
+# Request HDR10; fall back to SDR when the display/driver does not support it. Applies on the next launch.
+# HDR paper-white/UI and content peak brightness in nits; older INI files also default to 203/1000.
+# Paper white: 80..1000; peak: 80..10000. Effective peak is at least paper white.
+# Do not force 16:9 bars on real-time cutscenes; false restores original bars. Applies on the next launch.
+# Keep streetlight cones in fog during normal play, independently of post-processing quality; false disables them. Restart to apply.
+# The built-in benchmark keeps the fixed settings.xml quality and ignores this override.
+# Separate probes with spaces or commas. * enables every probe and may generate large logs.
+# Frame cap and refresh-rate matching. Adjustable on the performance page; restart to apply.
+# 0 means unlimited; 30/40/60 are suggested. Does not change the target_fps diagnostic threshold.
+# Set true during play to start capture, false to save and stop. Checked every 250 ms.
+# 0 disables automatic hitch capture; valid thresholds: 10..5000 ms.
+# bounded: wake by permit count; platform: use system semaphores as a compatibility fallback. Restart to apply.
+# enabled is a one-shot request, automatically reset to false before startup.
+# Start the game automatically after opening the launcher.
+# Built-in development trainer, inspired by Menyoo. Story Mode only; also available on the launcher Trainer page.
+# Resource mods. When disabled, Mods are not read at startup. Restart after changing this setting.
+# Remove Story Mode map boundary limits, independently of resource mods. Restart to apply.
+# Shared by native Vulkan and DXVK: skip startup precompilation and compile on first use. May cause gameplay stutter. Restart to apply.
+# Native Vulkan low-memory mode includes deferred compilation, idle pipeline/module eviction and device-dependent residency limits.
+# Restore from disk cache or recompile as needed; scene changes may stutter. Restart to apply.
+# system: system driver; custom: select an AdrenoTools-format ZIP from Drivers.
+# off: disable decoding; auto: enable without hardware BC support; on: force decoding. Restart to apply.
+# Native resource-graph/submission labels for frame-capture diagnosis. Restart to apply; does not enable validation layers.
+# A value above 0 runs only the independent Vulkan test for that many seconds, without game data.
+# Reuse native-backend material descriptors across frames; false falls back to the per-frame cache. Restart to apply.
+# Ordered asynchronous DXVK handoff; false restores the synchronous path. Restart to apply.
+# Experimental descriptor reuse. Decide defaults after fixed-scene testing; statistics are diagnostic only.
+# Used only by DXVK builds. Fully close and restart the game after changing it.
+# Keep virtual buttons visible with a physical controller; false restores automatic hiding.
+# Mobile-layout camera, gyroscope and run lock. Older layouts keep their original input behavior.
+# Show the outer green outline when the stick enters the running zone; does not affect run detection.
+# off / aim / always. Gyroscope input is ignored in menus and the background.
+# In-game minimap and notification layout; positions/sizes follow normalized rectangles from the control layout.

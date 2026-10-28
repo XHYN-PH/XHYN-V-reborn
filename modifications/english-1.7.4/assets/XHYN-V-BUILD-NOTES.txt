@@ -1,0 +1,10 @@
+XHYN V 1.7.4 English test build
+
+Localized from the user-supplied GTAV-Master-1.7.4 APK. Its original manifest reported version 1.7.1, code 84.
+Uses the XHYN-PH/XHYN-V-reborn repository logo and existing English release as a translation reference.
+New launcher text is translated at presentation boundaries. New catalog entries use readable model identifiers where an established English name is unavailable, following the reference APK's approach.
+The exact engine's Chinese Android locale gate is removed. Text archives default to american and fonts to efigs. Android's system language is not changed.
+The original developers retain credit for the game engine, renderer and third-party components. Original license notices are retained.
+No game resources or signing credentials are included. Provide legally obtained compatible game files, including English text and fonts.
+This build uses a new local test signing key and a separate application ID. It cannot update the original publisher's signed APK.
+Host, ARM64 instruction and packaging checks do not establish Android gameplay compatibility. Device and real game-resource testing remain necessary.
