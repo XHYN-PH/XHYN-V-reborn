@@ -1,15 +1,15 @@
 # Changelog
 
-## 1.7.4 English test build — 28 October 2026
+## 1.7.4 — 28 October 2026
 
-- Added an English presentation layer for the supplied 1.7.4-named APK, using the earlier English release as a reference.
-- Removed the exact engine’s Chinese system-language gate and selected English text archives/fonts.
-- Applied XHYN V branding and removed the outside black background from the purple V logo.
-- Preserved real file paths while translating surrounding text; kept command IDs, model IDs and parser matching inputs intact.
-- Published the new helper, patch, build and test code under a scoped MIT license, with translation data and verification records.
-- Added a fresh-directory build driver with pinned tool checks and optional private-key signing.
+- Refreshed XHYN V branding with a transparent purple V logo.
+- Updated launcher pages, dialogs, trainer text and control-layout descriptions.
+- Removed the Chinese system-language requirement and selected English game text/fonts.
+- Kept real file paths intact while translating surrounding interface text.
+- Preserved graphics, touch/controller, resource-management and custom-radio options.
+- Published our interface/language patches and build tools.
 
-7,093 host checks, 27 ARM64 instruction checks, APK preservation audits and signature verification passed. Android UI and gameplay are not device-tested. Some catalog names use readable model identifiers. The new app ID is `com.xhynph.xhynv.reborn174`; original signing identities and private data do not transfer.
+This edition uses a separate app package from older releases. Bring your own compatible GTA V files, including the required text and fonts.
 
 ## 0.1 — 16 October 2026
 
