@@ -2,13 +2,13 @@
 
 # XHYN V
 
-**XHYN V is a community-maintained Android build of the unofficial GTA V port**, based on the original Chinese Android project and maintained by **XHYN-PH**. It brings game setup, touch controls, graphics options, a Story Mode trainer and file management together in one Android app.
+**XHYN V is our community-maintained GTA V project for Android**, maintained by **XHYN-PH**. We bring game setup, touch controls, graphics configuration, a Story Mode trainer and file management together in one Android app. Our work focuses on the launcher experience, translations, branding, configuration and language fixes.
 
 **[Download XHYN V](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v1.7.4-en)** · **[Buy GTA V for PC](https://store.rockstargames.com/game/buy-gta-v)** · **[Source information](docs/SOURCE.md)**
 
 ## What does this project provide?
 
-The APK provides the Android launcher, native engine/runtime libraries and XHYN V's modifications. You select your own compatible game-data folder, configure the controls and renderer, and launch from the app.
+XHYN V combines an Android launcher and native ARM64 runtime with our interface, branding and language updates. Select your compatible game-data folder, configure your controls and graphics, and launch directly from the app.
 
 **XHYN V does not supply GTA V game files, RPF archives or links to download them.** You must own the game and provide compatible files yourself.
 
@@ -18,20 +18,20 @@ Rockstar's PC purchase includes **GTAV Enhanced and GTAV Legacy**. This port exp
 
 ## Is this a native port or an emulator?
 
-For this project, **native describes how the game CPU code runs**. The inspected APK contains a 64-bit ARM64 Android game library, `libgtav.so`, loaded through Android/SDL's native entry point. Package inspection found no Windows game executable or bundled Wine, Box64, FEX or QEMU runtime. See the [technical explanation and package inventory](docs/SOURCE.md).
+**XHYN V runs its game engine as native ARM64 Android code.** Our build loads the 64-bit `libgtav.so` game library through Android/SDL's native entry point. Native describes the CPU code that runs the game; graphics translation is a separate part of the architecture. See [how our runtime works](docs/SOURCE.md).
 
-**DXVK handles graphics, not CPU instructions.** It translates Direct3D 11/DXGI calls into Vulkan. DXVK is often used with Wine, but its own [DXVK Native documentation](https://github.com/doitsujin/dxvk#dxvk-native) explicitly supports native game/application ports **without Wine**. Finding DXVK in an APK does not, by itself, make that APK a CPU emulator.
+**We use DXVK to translate graphics calls.** On the DXVK path, Direct3D 11/DXGI calls are translated into Vulkan while the game code runs as ARM64 instructions. [DXVK Native](https://github.com/doitsujin/dxvk#dxvk-native) supports native game ports **without Wine**. Using a graphics compatibility layer does not turn native game code into CPU emulation.
 
-On the DXVK rendering path, the distinction looks like this:
+Our DXVK rendering path:
 
 ```text
 Android/SDL → ARM64 game engine
                   └─ Direct3D 11/DXGI → DXVK → Vulkan → GPU driver
 ```
 
-Likewise, **working on one GPU family does not prove emulation**. Native games can still depend on particular driver features, texture formats and Vulkan behavior. GPU compatibility and CPU execution are separate questions.
+**GPU support is a separate question.** Our renderer depends on driver features, texture formats and Vulkan behavior. Support for a particular GPU family does not change the CPU architecture of the game runtime.
 
-The precise description is **a native ARM64 Android port using graphics API translation where needed**. That does not mean the entire renderer was rewritten directly for Vulkan, that the complete engine source is public, or that Rockstar made an official Android release. Source availability, authorship and licensing are separate from whether code executes natively.
+XHYN V is therefore **a native ARM64 Android port with graphics API translation where needed**. We build on the original Android port and maintain this edition's improvements. Native execution does not imply that every rendering path was rewritten directly for Vulkan or that the complete engine source is public.
 
 ## Features
 
@@ -43,7 +43,7 @@ The precise description is **a native ARM64 Android port using graphics API tran
 - **Diagnostics:** readable error explanations, local reports, performance-monitoring options and diagnostic export.
 - **XHYN V interface:** English menus and trainer presentation, the purple V branding, and no Chinese system-language requirement. Some catalog entries use readable model identifiers.
 
-These features build on the supplied Android port; XHYN-PH maintains this edition and its modifications. Compatibility and performance depend on your device, driver, settings and game data.
+We maintain XHYN V's interface, configuration, branding and language patches on top of the original Android port. Compatibility and performance depend on your device, driver, settings and game data.
 
 ## Requirements and installation
 
@@ -55,11 +55,11 @@ These features build on the supplied Android port; XHYN-PH maintains this editio
 2. Grant the requested file access and select the folder containing `common.rpf`, `x64` and `update`.
 3. Start with the default settings. Fully close and reopen the game after changing settings that require a restart, such as the driver or DXVK runtime.
 
-The current release is a **development/test build**. It uses the separate app ID `com.xhynph.xhynv.reborn174` and does not update the original publisher's APK or the older XHYN V package. Device compatibility and gameplay are still being established; no universal FPS or stability promise is made.
+Our current release is a **development/test build**, using app ID `com.xhynph.xhynv.reborn174`. Earlier editions with different app IDs remain separate installations. Device compatibility and gameplay are still being established; performance varies by setup.
 
 ## Source and credits
 
-The [modification sources and build instructions](modifications/english-1.7.4) are public. Newly written helper, patch, build and test code is **MIT licensed** under its [defined scope](modifications/english-1.7.4/PROVENANCE.md). The complete original game engine, original launcher implementation and exact custom renderer source are not published here. This repository does not make GTA V or the whole APK open source.
+We publish [our helper classes, patches, build tools and tests](modifications/english-1.7.4), with **MIT licensing** for the newly written code under its [defined scope](modifications/english-1.7.4/PROVENANCE.md). Our public code covers XHYN V's modification layer. The original game engine, original launcher implementation and exact custom renderer source remain outside this repository, with their own applicable terms.
 
 Credit for the original Android port, engine and third-party components belongs to their authors. See [source information](docs/SOURCE.md) and [credits/notices](docs/CREDITS.md).
 
