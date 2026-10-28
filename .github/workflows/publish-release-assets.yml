@@ -1,0 +1,44 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 XHYN-PH
+name: Publish release downloads
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/publish-release-assets.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  upload:
+    if: github.repository == 'XHYN-PH/XHYN-V-reborn'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Download, verify and attach release files
+        shell: bash
+        run: |
+          set -euo pipefail
+          artifact_ref=9e1b8d828b9a8f034a311a0e130777be3633021a
+          artifact_url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${artifact_ref}/releases/1.7.4-en"
+          artifact_directory=$(mktemp -d)
+          cd "$artifact_directory"
+          files=(
+            XHYN-V-1.7.4-English.apk
+            XHYN-V-1.7.4-English-Public-Source.zip
+            XHYN-V-1.7.4-English-verification.md
+            SHA256SUMS.txt
+          )
+          for file in "${files[@]}"; do
+            curl --fail --location --silent --show-error --retry 2 \
+              --connect-timeout 20 --max-time 180 \
+              "${artifact_url}/${file}" --output "$file"
+          done
+          sha256sum --check SHA256SUMS.txt
+          gh release upload v1.7.4-en "${files[@]}" \
+            --repo "$GITHUB_REPOSITORY" --clobber
