@@ -16,3 +16,6 @@ __pycache__/
 *Private-Signing*
 *Development-Checkpoint*
 源码.zip
+
+# Explicit public release output; private APK inputs remain ignored.
+!releases/1.7.4-en/XHYN-V-1.7.4-English.apk

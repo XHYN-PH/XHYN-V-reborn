@@ -1,0 +1,5 @@
+# Public source exports omit separately downloadable binary release artifacts.
+/releases export-ignore
+/releases/** export-ignore
+/releases/**/*.apk binary
+/releases/**/*.zip binary

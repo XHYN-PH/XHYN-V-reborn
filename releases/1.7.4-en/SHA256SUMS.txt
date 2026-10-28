@@ -1,0 +1,3 @@
+60d43f0c73da5647153ada2b3e5af7659e53ee79411a40e7e0a2ef5d72ebb586  XHYN-V-1.7.4-English.apk
+016209c1c9461a9dd802ec37ae7ba1ca3011a504aa6eb68fb09b81994835748d  XHYN-V-1.7.4-English-Public-Source.zip
+4b20ac36073c06065e4a9f7f6d4f8d37a2695b2303a2fdaa0cdd78eeab08663f  XHYN-V-1.7.4-English-verification.md
