@@ -1,0 +1,23 @@
+{
+  "apk_sha256": "60d43f0c73da5647153ada2b3e5af7659e53ee79411a40e7e0a2ef5d72ebb586",
+  "engine_machine": "EM_AARCH64",
+  "engine_class": 64,
+  "engine_type": "ET_DYN",
+  "engine_needed": [
+    "libSDL3.so",
+    "libdl.so",
+    "libandroid.so",
+    "liblog.so",
+    "libGLESv2.so",
+    "libGLESv1_CM.so",
+    "libOpenSLES.so",
+    "libm.so",
+    "libz.so",
+    "libc.so"
+  ],
+  "exports_SDL_main": true,
+  "exported_android_JNI_functions": 54,
+  "windows_executable_entries": [],
+  "known_emulator_runtime_name_matches": [],
+  "limitation": "This inventories the supplied package; it is not proof of every code path or of game/driver compatibility."
+}

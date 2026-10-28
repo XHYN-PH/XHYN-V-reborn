@@ -2,69 +2,67 @@
 
 # XHYN V
 
-An English-first Android edition of the unofficial native GTA V port, maintained by **XHYN-PH**. XHYN V brings the launcher, controls, trainer menus and diagnostics into English, with a consistent interface and a public modification layer you can inspect and improve.
+**XHYN V is a community-maintained Android build of the unofficial GTA V port**, based on the original Chinese Android project and maintained by **XHYN-PH**. It brings game setup, touch controls, graphics options, a Story Mode trainer and file management together in one Android app.
 
-**[Download the 1.7.4 English test build](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v1.7.4-en)** · **[Build and patch sources](modifications/english-1.7.4)** · **[Verification results](verification/english-1.7.4/README.md)** · **[Previous 0.1 release](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.1)**
+**[Download XHYN V](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v1.7.4-en)** · **[Buy GTA V for PC](https://store.rockstargames.com/game/buy-gta-v)** · **[Source information](docs/SOURCE.md)**
 
-> Bring your own legally obtained, compatible GTA V game files, including English text and fonts. No game data, RPF archives or game-download links are included. This release is a **test build**: Android UI and gameplay have not been tested on a device for this build.
+## What does this project provide?
 
-## Why use XHYN V?
+The APK provides the Android launcher, native engine/runtime libraries and XHYN V's modifications. You select your own compatible game-data folder, configure the controls and renderer, and launch from the app.
 
-The goal is to make this port easier to understand and configure without needing Chinese system settings or guessing what a launcher option means. English labels, file-management prompts, trainer text and error explanations help you set it up and report problems with useful information.
+**XHYN V does not supply GTA V game files, RPF archives or links to download them.** You must own the game and provide compatible files yourself.
 
-The changes are also reviewable. The new Java helpers, exact-build patches, build driver and tests are published alongside the translation data and verification records. You can see what was changed and rebuild the modification layer when you have the matching base APK and tools.
+[**Buy the real game from the official Rockstar Store →**](https://store.rockstargames.com/game/buy-gta-v)
+
+Rockstar's PC purchase includes **GTAV Enhanced and GTAV Legacy**. This port expects compatible **Legacy** files; ownership does not make every game version or Enhanced data set compatible with it. Follow the version requirements for the build you install.
+
+## Is this a native port or an emulator?
+
+For this project, **native describes how the game CPU code runs**. The inspected APK contains a 64-bit ARM64 Android game library, `libgtav.so`, loaded through Android/SDL's native entry point. Package inspection found no Windows game executable or bundled Wine, Box64, FEX or QEMU runtime. See the [technical explanation and package inventory](docs/SOURCE.md).
+
+**DXVK handles graphics, not CPU instructions.** It translates Direct3D 11/DXGI calls into Vulkan. DXVK is often used with Wine, but its own [DXVK Native documentation](https://github.com/doitsujin/dxvk#dxvk-native) explicitly supports native game/application ports **without Wine**. Finding DXVK in an APK does not, by itself, make that APK a CPU emulator.
+
+On the DXVK rendering path, the distinction looks like this:
+
+```text
+Android/SDL → ARM64 game engine
+                  └─ Direct3D 11/DXGI → DXVK → Vulkan → GPU driver
+```
+
+Likewise, **working on one GPU family does not prove emulation**. Native games can still depend on particular driver features, texture formats and Vulkan behavior. GPU compatibility and CPU execution are separate questions.
+
+The precise description is **a native ARM64 Android port using graphics API translation where needed**. That does not mean the entire renderer was rewritten directly for Vulkan, that the complete engine source is public, or that Rockstar made an official Android release. Source availability, authorship and licensing are separate from whether code executes natively.
 
 ## Features
 
-The English build preserves the supplied APK's existing features and translates their interfaces. Availability and behavior on a particular phone still require device testing.
+- **Game setup:** select a game folder, manage resources, and access archive extraction/moving tools.
+- **Touch and controller controls:** selectable/editable layouts, controls for different game states, camera/aim options, gyroscope and tilt-steering settings.
+- **Graphics configuration:** bundled/imported DXVK selection, Vulkan driver options, BC texture decoding, HDR, shader preparation and frame-rate limits.
+- **Story Mode trainer:** character, vehicle, weapon and world options, vehicle customization, favorites and presets.
+- **Mods and custom radio:** resource-mod import interfaces, supported audio importing, previews and Self Radio management. ASI/DLL loading is not provided.
+- **Diagnostics:** readable error explanations, local reports, performance-monitoring options and diagnostic export.
+- **XHYN V interface:** English menus and trainer presentation, the purple V branding, and no Chinese system-language requirement. Some catalog entries use readable model identifiers.
 
-| Area | What you can configure or access |
-|---|---|
-| **English interface** | Launcher pages, dialogs, accessibility labels, download/import prompts, touch-layout descriptions and trainer display text. |
-| **English game defaults** | English text archives and fonts are selected. The engine's Chinese Android system-language check is removed; your phone's language is left alone. |
-| **Touch and controller setup** | Layout selection/editing, controls for different game states, controller settings, camera/aim options, gyroscope and tilt-steering options. |
-| **Graphics options** | Bundled/imported DXVK selection, Vulkan driver selection, BC texture-decoding settings, HDR controls, shader-preparation options and frame-rate limits. |
-| **Story Mode trainer** | Interfaces for character, vehicle, weapon and world options, customization, favorites and presets. Some catalog names use readable model identifiers where an established English name is unavailable. |
-| **Game-file management** | Game-folder selection, resource extraction/moving and mod-import interfaces. The launcher advertises ZIP, RAR/RAR5 and OIV imports; ASI/DLL loading is not provided. |
-| **Custom radio** | Audio-import and preview interfaces for adding supported tracks to Self Radio. Device codec support and the launcher's size/duration limits apply. |
-| **Diagnostics** | Error explanations, diagnostic export, performance-monitoring controls and driver/GPU checks, with original diagnostic data retained for investigation. |
-| **XHYN V branding** | The purple V logo with a transparent outside background, used in the repository and APK. |
-
-XHYN V is a modification of the original Android port. It does not claim to have created its engine, renderer or inherited launcher features, and it is not a promise of higher FPS or universal device compatibility.
+These features build on the supplied Android port; XHYN-PH maintains this edition and its modifications. Compatibility and performance depend on your device, driver, settings and game data.
 
 ## Requirements and installation
 
-- Android **11 or newer**, an **ARM64** device and a compatible Vulkan graphics driver.
-- A compatible, legally obtained GTA V Legacy data set with **English text and fonts**. The project's documented baseline is **1.61 / build 2699**; actual startup and resource compatibility for this English test build still need device validation.
-- Sufficient storage for your game files, caches and any imported content.
+- **Android 11 or newer**, an **ARM64** device and a compatible **Vulkan** driver.
+- Your own compatible **GTA V Legacy** files, including English text and fonts. The project's documented baseline is **1.61 / build 2699**.
+- Enough storage for the game, caches and imported content.
 
-1. Download the APK and `SHA256SUMS.txt` from the release page.
-2. Install **XHYN V**. This build uses the separate app ID `com.xhynph.xhynv.reborn174` and a new signing key; it does not update the original publisher's app or the older XHYN V package.
-3. Grant the requested file access and select the game folder containing `common.rpf`, `x64` and `update`.
-4. Start with the default settings. No Chinese system-language setting is required.
-5. Fully close and reopen the game after changing settings that require a restart, including driver or DXVK selections.
+1. Download and install the APK from the [release page](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v1.7.4-en).
+2. Grant the requested file access and select the folder containing `common.rpf`, `x64` and `update`.
+3. Start with the default settings. Fully close and reopen the game after changing settings that require a restart, such as the driver or DXVK runtime.
 
-The release version is `1.7.4-en`. The supplied base was named 1.7.4 but reported 1.7.1/code 84 internally; this distinction and the exact input hashes are documented in the verification records.
+The current release is a **development/test build**. It uses the separate app ID `com.xhynph.xhynv.reborn174` and does not update the original publisher's APK or the older XHYN V package. Device compatibility and gameplay are still being established; no universal FPS or stability promise is made.
 
-## What has been checked?
+## Source and credits
 
-- **7,093 host checks** for translation outputs, formatted errors, catalog identifiers and preservation of real file paths.
-- **27 ARM64 instruction checks** for English language/font/text selectors and removal of the locale gate.
-- APK rebuild, signature, DEX, resource-ID, ZIP integrity and native-library alignment checks.
-- Preservation checks for original classes/method signatures, configuration values, permissions, components and the other twelve native libraries.
+The [modification sources and build instructions](modifications/english-1.7.4) are public. Newly written helper, patch, build and test code is **MIT licensed** under its [defined scope](modifications/english-1.7.4/PROVENANCE.md). The complete original game engine, original launcher implementation and exact custom renderer source are not published here. This repository does not make GTA V or the whole APK open source.
 
-These checks do **not** replace running the app on Android. UI layout, storage flows, driver loading, graphics, audio/video, trainer actions, performance and Story Mode remain unverified on a device for this release. Read the [full verification report](verification/english-1.7.4/README.md) before treating it as a daily-use build.
+Credit for the original Android port, engine and third-party components belongs to their authors. See [source information](docs/SOURCE.md) and [credits/notices](docs/CREDITS.md).
 
-## Source, licensing and how it works
+For problems, include your phone/GPU, Android version, driver, renderer, game-data version and reproduction steps. Attach relevant diagnostics after removing personal information.
 
-The packaged engine is native ARM64 Android code. DXVK provides Direct3D-to-Vulkan translation, and the supplied base also contains native Vulkan components. The exact full engine/renderer source and original launcher implementation are not published here.
-
-The newly written **1.7.4 English helper, patch, build and test code is MIT licensed**, with a [defined license scope](modifications/english-1.7.4/PROVENANCE.md). Translation inputs, model identifiers, artwork and third-party components retain their applicable terms. This does not make GTA V or the complete APK open source.
-
-See [source information](docs/SOURCE.md), [build instructions](docs/BUILD.md), and [credits and notices](docs/CREDITS.md). The older 0.1 modification sources remain available for reference; their native offsets are not interchangeable with this build.
-
-## Reporting a problem
-
-Include your phone model, GPU, Android version, graphics driver, selected renderer/DXVK, game-data version and steps to reproduce the problem. Attach a diagnostic export or relevant logs after removing personal information. Say whether the problem occurs with default settings and without mods.
-
-XHYN V is unofficial and is not affiliated with Rockstar Games or Take-Two. GTA V and its associated assets belong to their respective rights holders. Credit for the original Android port and third-party libraries belongs to their authors.
+This project is unofficial and is not affiliated with Rockstar Games or Take-Two. GTA V and its associated assets belong to their respective rights holders.

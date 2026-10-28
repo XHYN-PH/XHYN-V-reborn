@@ -1,5 +1,35 @@
 # Source and native-port explanation
 
+## Native execution and graphics translation in 1.7.4
+
+Here, **native** describes the CPU target and Android loading path. The
+[package inventory](../verification/english-1.7.4/native-package.json) records the
+released APK's ARM64 (`EM_AARCH64`) 64-bit ELF game library, its `SDL_main` export,
+Android JNI entry points and Android/SDL dependencies. No Windows `.exe`/`.dll`
+payload or package entries matching the usual Wine, Box64, FEX or QEMU runtime
+names were found. This is evidence about the inspected package, not a proof of
+every possible code path or a reproduction of the complete engine build.
+
+Graphics translation is a different layer. DXVK translates Direct3D calls into
+Vulkan; its upstream [DXVK Native documentation](https://github.com/doitsujin/dxvk#dxvk-native)
+explicitly describes using it for native ports without Wine. Native ARM64 CPU
+execution can therefore coexist with Direct3D-to-Vulkan translation. Calling
+that graphics path a compatibility layer does not establish x86 CPU emulation.
+The APK also includes native Vulkan components; their presence alone is not a
+claim that every render pass bypasses DXVK.
+
+GPU restrictions, BC/ASTC texture support and Vulkan driver requirements are not
+CPU-architecture evidence. A native port can have limited GPU compatibility.
+Similarly, closed or incomplete source publication does not determine which
+instruction set a binary executes. It does limit independent reproducibility and
+provenance review, which remain separate questions.
+
+The description used here is **a native ARM64 Android port with graphics API
+translation where needed**. It is not a claim of an official Rockstar Android
+release, a clean-room rewrite, a fully Vulkan-only renderer or complete public
+engine source. The Android ARM64 ABI is documented by
+[Android's NDK guide](https://developer.android.com/ndk/guides/abis#arm64-v8a).
+
 ## Why does this use DXVK?
 
 There are two separate parts:
