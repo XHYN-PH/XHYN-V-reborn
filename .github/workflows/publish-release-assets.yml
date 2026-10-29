@@ -3,11 +3,13 @@
 name: Publish release downloads
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - .github/workflows/publish-release-assets.yml
   workflow_dispatch:
+    inputs:
+      version:
+        description: Release to attach downloads to
+        type: choice
+        default: v0.2
+        options: [v0.2, v1.7.4-en]
 
 permissions:
   contents: write
@@ -19,19 +21,30 @@ jobs:
     timeout-minutes: 10
     env:
       GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG: ${{ inputs.version }}
     steps:
       - name: Download, verify and attach release files
         shell: bash
         run: |
           set -euo pipefail
-          artifact_ref=9e1b8d828b9a8f034a311a0e130777be3633021a
-          artifact_url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${artifact_ref}/releases/1.7.4-en"
+          case "$RELEASE_TAG" in
+            v0.2)
+              artifact_folder=0.2
+              artifact_prefix=XHYN-V-0.2
+              ;;
+            v1.7.4-en)
+              artifact_folder=1.7.4-en
+              artifact_prefix=XHYN-V-1.7.4-English
+              ;;
+            *) exit 2 ;;
+          esac
+          artifact_url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_SHA}/releases/${artifact_folder}"
           artifact_directory=$(mktemp -d)
           cd "$artifact_directory"
           files=(
-            XHYN-V-1.7.4-English.apk
-            XHYN-V-1.7.4-English-Public-Source.zip
-            XHYN-V-1.7.4-English-verification.md
+            "${artifact_prefix}.apk"
+            "${artifact_prefix}-Public-Source.zip"
+            "${artifact_prefix}-verification.md"
             SHA256SUMS.txt
           )
           for file in "${files[@]}"; do
@@ -40,5 +53,5 @@ jobs:
               "${artifact_url}/${file}" --output "$file"
           done
           sha256sum --check SHA256SUMS.txt
-          gh release upload v1.7.4-en "${files[@]}" \
+          gh release upload "$RELEASE_TAG" "${files[@]}" \
             --repo "$GITHUB_REPOSITORY" --clobber

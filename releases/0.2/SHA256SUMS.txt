@@ -1,0 +1,3 @@
+19e313795d9d497f8ee6979b32f50312ee4a8e70d7269933da0cbe52aaa3a8f1  XHYN-V-0.2.apk
+1802cd0f8b518b714e2e36a77205b666d7f2bb86cb1ec38d9e5a447c2e9dff44  XHYN-V-0.2-Public-Source.zip
+caf005b60aea95add6a1bdf946a6378055cbdaa1655d5fb2325c954eacb2b096  XHYN-V-0.2-verification.md

@@ -1,0 +1,55 @@
+{
+  "release": "0.2",
+  "applicationId": "com.xhynph.xhynv.reborn174",
+  "applicationLabel": "XHYN V",
+  "versionCode": 200,
+  "input": {
+    "name": "GTAV-Master-1.7.26-仿PC修改器.apk",
+    "sha256": "da730ee5b153cdf9a162d2dacd7bec45f0bf8a143f928a29d359c5c97ae51191",
+    "engineSha256": "e8c6210a675c0741f7d46c77c0c41cf90698d94f1f954527f4cf856fb2dc16be",
+    "minimumAndroidApi": 30,
+    "targetAndroidApi": 36
+  },
+  "excluded": [8, 10, 16],
+  "selected": {
+    "1": "Render resolution and scale",
+    "2": "Graphics quality controls",
+    "3": "Population and distance controls",
+    "4": "Reduced texture demand",
+    "5": "Unified real FPS limit and VSync controls",
+    "6": "Renderer-specific shader compiler settings",
+    "7": "Preserved caches and targeted manual cleanup",
+    "9": "Reduced repeated launcher/configuration work",
+    "11": "GPU and renderer capability checks",
+    "12": "Guard unsupported DXVK sample-location command",
+    "13": "Audio header and invalid-object failure paths",
+    "14": "Startup allocation/initialization guard",
+    "15": "Resource-fixup fatal context",
+    "17": "Bounded long-session memory and streaming diagnostics",
+    "18": "Session-matched reports and actual runtime identities",
+    "19": "Timed capture with automatic stop",
+    "20": "Runtime script/native-registration compatibility reporting",
+    "21": "GPU device-loss diagnostics and controlled stop",
+    "22": "Explicit experimental PanVK integration",
+    "23": "Experimental Xclipse/system Vulkan integration",
+    "24": "GPU-aware driver admission and environment settings",
+    "25": "Isolated render/presentation readiness test"
+  },
+  "additionalSelected": [
+    "English interface, trainer presentation, game text/font selectors, and removal of the Chinese system-locale gate",
+    "Transparent repository logo and XHYN V branding",
+    "Turnip automatic, GMEM, and SYSMEM choices scoped to Turnip",
+    "One UI Turnip workaround scoped to a compatible driver",
+    "One coherent dxvk.conf editor/import/enable path with effective runtime verification",
+    "Review other ports and report additional suggestions separately",
+    "About button beside System with Telegram https://t.me/xhynv, YouTube https://youtube.com/@xhyn_ph, and the XHYN V GitHub repository"
+  ],
+  "scopeInterpretation": {
+    "8": "No new generic profile rollback/restore UI; atomic writes and ordinary error recovery remain implementation safeguards.",
+    "10": "No general game-file scan, archive-header preflight, or launch gate based on a complete game-file manifest.",
+    "16": "No automatic clean-baseline mode and no automatic disabling of the user's mods or trainer.",
+    "20": "Selected runtime script/API failure checks remain in scope without adding the excluded general game-file preflight.",
+    "nativeRenderer": "This release targets the uploaded SDL3/DXVK base. The earlier SDL2 native-Vulkan/SDL3-compat experiment is not represented as a working bundled engine."
+  },
+  "releaseRule": "Record implemented, partial, and unverified items separately. Do not claim device gameplay validation or universal GPU support from host checks."
+}

@@ -1,0 +1,5 @@
+{
+  "Landroid/graphics/Canvas;->drawText(Ljava/lang/String;FFLandroid/graphics/Paint;)V": 15,
+  "Landroid/graphics/Paint;->measureText(Ljava/lang/String;)F": 4,
+  "Landroid/text/TextPaint;->measureText(Ljava/lang/String;)F": 2
+}

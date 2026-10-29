@@ -1,6 +1,6 @@
 # Source and native-port explanation
 
-## Native execution and graphics translation in 1.7.4
+## Native execution and graphics translation
 
 **XHYN V runs its engine as native ARM64 Android code.** Our launcher loads
 `libgtav.so`, a 64-bit ARM64 (`EM_AARCH64`) Android shared library, through SDL's
@@ -48,7 +48,9 @@ XHYN V 0.1 also uses ARM64 ELF shared libraries, with SDL's `nativeRunMain` as t
 
 ## What source is included?
 
-The current [1.7.4 English modification layer](../modifications/english-1.7.4) includes four new Java helpers, guarded binary/UI patches, a build driver, translation data and host/native/package tests. Its new helper and tooling code is MIT licensed under the [documented scope](../modifications/english-1.7.4/PROVENANCE.md). Our guarded patch workflow targets an exact base build, identified by its SHA-256; it does not compile the complete original game engine. The [1.7.4 verification records](../verification/english-1.7.4) distinguish checks performed from untested Android behavior.
+The current [0.2 modification layer](../modifications/v0.2) contains Java/C helpers, probe shaders, translations, guarded binary/UI patches, a complete build driver and checks for the 1.7.26 runtime. New code is MIT licensed under its [defined scope](../modifications/v0.2/PROVENANCE.md). It does not compile the original engine. See [implementation status](../modifications/v0.2/STATUS.md) for testing limits.
+
+The earlier [1.7.4 English modification layer](../modifications/english-1.7.4) includes four new Java helpers, guarded binary/UI patches, a build driver, translation data and host/native/package tests. Its new helper and tooling code is MIT licensed under the [documented scope](../modifications/english-1.7.4/PROVENANCE.md). Our guarded patch workflow targets an exact base build, identified by its SHA-256; it does not compile the complete original game engine. The [1.7.4 verification records](../verification/english-1.7.4) distinguish checks performed from untested Android behavior.
 
 The older [modifications directory](../modifications) contains the Java helpers, JNI language bridge, exact-build patch/hook scripts, translation mapping, compile-only stubs and verification scripts used for our changes. They cover language selection, configuration, cache identity, display requests, session handling and diagnostics.
 
@@ -57,7 +59,7 @@ The [verification directory](../verification) contains package checks, native pa
 ## What is unavailable?
 
 - The complete original game engine and Android-base source, with verified provenance and redistribution permission.
-- The exact custom DXVK patch set used for the renderer binaries.
+- The complete exact patch sets for all renderer/frame-generation binaries; known upstream revisions and notices are retained, while our new guard source is published.
 - A complete public rebuild from source of the entire APK.
 
 Older source code was available during development, but it does not fully match the engine and custom DXVK build used here. This public repository contains our modification layer. Proprietary engine code, decompiled original launcher code, game data, private signing material and private development checkpoints are excluded.
@@ -66,4 +68,4 @@ Upstream open-source component links are listed in [CREDITS.md](CREDITS.md). An 
 
 ## Source licensing
 
-The newly written code in `modifications/english-1.7.4` has an MIT license with explicit scope. Older materials retain their existing terms. Publication does not relicense GTA V, the game engine, original launcher, artwork, translation inputs or third-party components. No blanket open-source license is claimed for the full APK. Existing third-party notices remain applicable. A native port still has copyright and dependency-license obligations; the word "native" does not remove them.
+Newly written code in the versioned modification directories has MIT licensing with explicit scope. Older materials retain their existing terms. Publication does not relicense GTA V, the game engine, original launcher, artwork, translation inputs or third-party components. No blanket open-source license is claimed for the full APK. Existing third-party notices remain applicable. A native port still has copyright and dependency-license obligations; the word "native" does not remove them.

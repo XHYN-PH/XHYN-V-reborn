@@ -19,3 +19,5 @@ __pycache__/
 
 # Explicit public release output; private APK inputs remain ignored.
 !releases/1.7.4-en/XHYN-V-1.7.4-English.apk
+
+!releases/0.2/XHYN-V-0.2.apk

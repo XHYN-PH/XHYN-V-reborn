@@ -1,0 +1,1 @@
+This local compatibility test uses the original GSFG 1.1 binary and X11 runtime dependencies from the installed GameHub. Only the standalone Vulkan driver constructor is disabled. Their SHA256 hashes are recorded in gsfg-runtime.json. These components are separate from the MIT-licensed Win-FG fallback. The GSFG shaders and network weights are unmodified.

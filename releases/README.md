@@ -1,9 +1,5 @@
 # Release downloads
 
-The [1.7.4 English test build](1.7.4-en) contains the signed APK, the source
-snapshot from tag `v1.7.4-en`, its verification report and SHA-256 checksums.
-These files are linked directly from the GitHub release page.
+[Version 0.2](0.2) contains the signed APK, public modification-source snapshot, developer verification report and SHA-256 sums. The [previous 1.7.4 English build](1.7.4-en) remains available.
 
-Source exports omit this download folder through `.gitattributes`. The APK is a
-binary test build; the source license applies only to the defined new helper and
-tooling code, not the original engine or third-party components.
+Source exports omit this binary download folder through `.gitattributes`. APKs are development builds; source licensing covers only the defined new helper/tooling code and retains third-party terms.

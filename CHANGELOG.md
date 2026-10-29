@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2 — 29 October 2026
+
+- Updated the runtime and PC-style trainer, with English menus and the transparent XHYN V logo.
+- Added graphics, population, distance, FPS and texture-detail controls.
+- Added a dxvk.conf editor/import and renderer-aware shader controls.
+- Added experimental PanVK/Xclipse driver paths, separate driver checks and Turnip options.
+- Improved targeted crash handling, timed capture and session reports.
+- Added About beside System with Telegram, YouTube and GitHub links.
+- Kept the original download page and components.
+
+Development prerelease; device compatibility and gameplay still need testing.
+
 ## 1.7.4 — 28 October 2026
 
 - Refreshed XHYN V branding with a transparent purple V logo.

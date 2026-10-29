@@ -2,15 +2,15 @@
 
 # XHYN V
 
-**XHYN V is our community-maintained GTA V project for Android**, maintained by **XHYN-PH**. We bring game setup, touch controls, graphics configuration, a Story Mode trainer and file management together in one Android app. Our work focuses on the launcher experience, translations, branding, configuration and language fixes.
+**XHYN V brings GTA V to Android with touch controls, graphics and driver settings, and a Story Mode trainer.** Maintained by **XHYN-PH**, this edition brings setup and performance controls together so you can adjust the game for your device.
 
-**[Download XHYN V](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v1.7.4-en)** · **[Buy GTA V for PC](https://store.rockstargames.com/game/buy-gta-v)** · **[Source information](docs/SOURCE.md)**
+**[Download XHYN V 0.2](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.2)** · **[Telegram](https://t.me/xhynv)** · **[YouTube](https://youtube.com/@xhyn_ph)** · **[Buy GTA V](https://store.rockstargames.com/game/buy-gta-v)**
 
 ## What does this project provide?
 
 XHYN V combines an Android launcher and native ARM64 runtime with our interface, branding and language updates. Select your compatible game-data folder, configure your controls and graphics, and launch directly from the app.
 
-**XHYN V does not supply GTA V game files, RPF archives or links to download them.** You must own the game and provide compatible files yourself.
+**The APK does not bundle GTA V game data.** You need your own compatible game files and must own the game.
 
 [**Buy the real game from the official Rockstar Store →**](https://store.rockstargames.com/game/buy-gta-v)
 
@@ -37,13 +37,17 @@ XHYN V is therefore **a native ARM64 Android port with graphics API translation 
 
 - **Game setup:** select a game folder, manage resources, and access archive extraction/moving tools.
 - **Touch and controller controls:** selectable/editable layouts, controls for different game states, camera/aim options, gyroscope and tilt-steering settings.
-- **Graphics configuration:** bundled/imported DXVK selection, Vulkan driver options, BC texture decoding, HDR, shader preparation and frame-rate limits.
+- **Graphics and memory controls:** render resolution/scale, individual quality options, a lower-settings shortcut, population density, draw distance and texture-detail settings.
+- **Frame-rate controls:** rendered FPS cap, VSync and frame latency, with separate rendered/generated FPS labels for optional frame generation.
+- **DXVK configuration:** bundled/imported renderer selection, shader compiler controls and a `dxvk.conf` editor with import, enable/disable and an effective-settings preview.
+- **Vulkan drivers:** System Vulkan, imported Android Vulkan drivers, experimental PanVK/Mali and Xclipse paths, plus Turnip GMEM/SYSMEM and One UI controls. Custom drivers require a separate draw/present check. A passing check does not guarantee the game will work.
+- **Shader caches:** separate cache locations by renderer and driver package, preserved across launches, with manual cleanup.
 - **Story Mode trainer:** character, vehicle, weapon and world options, vehicle customization, favorites and presets.
 - **Mods and custom radio:** resource-mod import interfaces, supported audio importing, previews and Self Radio management. ASI/DLL loading is not provided.
-- **Diagnostics:** readable error explanations, local reports, performance-monitoring options and diagnostic export.
-- **XHYN V interface:** English menus and trainer presentation, the purple V branding, and no Chinese system-language requirement. Some catalog entries use readable model identifiers.
+- **Diagnostics:** timed memory/I/O capture, reports tied to each game attempt, script/API mismatch reporting, and clearer engine/device-loss errors.
+- **Project links:** an About button beside System opens Telegram, YouTube and this repository. Menus and trainer presentation are in English, with no Chinese system-language requirement.
 
-We maintain XHYN V's interface, configuration, branding and language patches on top of the original Android port. Compatibility and performance depend on your device, driver, settings and game data.
+XHYN V 0.2 uses the newer 1.7.26 runtime and retains its download page, PC-style trainer, touch layouts, custom radio and frame-generation options. Frame generation starts disabled on fresh installs. Compatibility and performance depend on your device, driver, settings and game data; experimental driver support does not imply support for every GPU.
 
 ## Requirements and installation
 
@@ -51,15 +55,16 @@ We maintain XHYN V's interface, configuration, branding and language patches on 
 - Your own compatible **GTA V Legacy** files, including English text and fonts. The project's documented baseline is **1.61 / build 2699**.
 - Enough storage for the game, caches and imported content.
 
-1. Download and install the APK from the [release page](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v1.7.4-en).
+1. Download and install the APK from the [release page](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.2).
 2. Grant the requested file access and select the folder containing `common.rpf`, `x64` and `update`.
-3. Start with the default settings. Fully close and reopen the game after changing settings that require a restart, such as the driver or DXVK runtime.
+3. Open **Performance → XHYN V · Performance and drivers** to adjust graphics. Start with System Vulkan and lower settings if your device struggles.
+4. Fully close and reopen the game after changing its driver, renderer or graphics settings. Graphics-file overrides take effect once the game has created `save/settings.xml`.
 
-Our current release is a **development/test build**, using app ID `com.xhynph.xhynv.reborn174`. Earlier editions with different app IDs remain separate installations. Device compatibility and gameplay are still being established; performance varies by setup.
+Version 0.2 is a **development prerelease**, using the same app ID and release key as our previous English edition so it can install as an update. Device gameplay and GPU compatibility still need testing. Earlier editions with different app IDs remain separate installations.
 
 ## Source and credits
 
-We publish [our helper classes, patches, build tools and tests](modifications/english-1.7.4), with **MIT licensing** for the newly written code under its [defined scope](modifications/english-1.7.4/PROVENANCE.md). Our public code covers XHYN V's modification layer. The original game engine, original launcher implementation and exact custom renderer source remain outside this repository, with their own applicable terms.
+We publish [our 0.2 helper classes, native helper, patches, build tools and tests](modifications/v0.2), with **MIT licensing** for newly written code under its [defined scope](modifications/v0.2/PROVENANCE.md). This is the source for our modification layer. Original engine and launcher code remain subject to their own terms and are not published here. The earlier [1.7.4 English layer](modifications/english-1.7.4) remains available.
 
 Credit for the original Android port, engine and third-party components belongs to their authors. See [source information](docs/SOURCE.md) and [credits/notices](docs/CREDITS.md).
 

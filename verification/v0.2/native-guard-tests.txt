@@ -1,0 +1,1 @@
+PASS 57 native guard checks, including original fault reproduction and valid-call ABI preservation.

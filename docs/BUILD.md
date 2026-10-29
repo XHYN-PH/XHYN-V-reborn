@@ -1,8 +1,12 @@
 # Modification-source layout
 
+## 0.2
+
+The current [0.2 source](../modifications/v0.2/README.md) includes the complete exact-base build driver, Java/C helpers, shaders, patches and checks. It targets 1.7.26 and requires NDK r27c alongside the pinned Java/Android tools. See its [implementation status](../modifications/v0.2/STATUS.md) for device-testing limits.
+
 ## 1.7.4 English test build
 
-The current [English modification layer](../modifications/english-1.7.4/README.md) contains a complete build driver for applying these changes to the exact privately supplied APK. It verifies input/tool hashes, compiles only the four new Java helpers, applies guarded language and presentation patches, assembles the APK, and runs host/ARM64 checks. Signed builds also run signature and final preservation audits. Signing keys are user-provided and never part of the public package.
+The earlier [English modification layer](../modifications/english-1.7.4/README.md) contains a complete build driver for applying these changes to the exact privately supplied APK. It verifies input/tool hashes, compiles only the four new Java helpers, applies guarded language and presentation patches, assembles the APK, and runs host/ARM64 checks. Signed builds also run signature and final preservation audits. Signing keys are user-provided and never part of the public package.
 
 This is a binary patch/rebuild workflow, not compilation of the original game engine. See its README for commands, dependencies and license scope. Recorded output is in [verification/english-1.7.4](../verification/english-1.7.4). Android execution and gameplay still need a device.
 

@@ -1,0 +1,552 @@
+MIT License
+
+Copyright (c) 2026 The412Banner
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+# NOTICE — FidelityFX Optical Flow (model 3)
+
+win-fg "model 3" (FSR3 Optical Flow) embeds compute shaders that are an
+adaptation of the **AMD FidelityFX SDK FSR3 Optical Flow** algorithm.
+
+Source passes adapted (FidelityFX-SDK, branch `main`):
+
+- `Kits/FidelityFX/framegeneration/fsr3/include/gpu/opticalflow/ffx_opticalflow_prepare_luma.h`
+  → `of3_luma.comp` (Rec.709 LDR luminance extraction)
+- `Kits/FidelityFX/framegeneration/fsr3/include/gpu/opticalflow/ffx_opticalflow_compute_luminance_pyramid.h`
+  → `of3_downsample.comp` (4-tap box / SPD-equivalent mip reduce)
+- `Kits/FidelityFX/framegeneration/fsr3/include/gpu/opticalflow/ffx_opticalflow_compute_optical_flow_v5.h`
+  → `of3_flow.comp` (SAD block-match search with coarse-level prediction)
+- `Kits/FidelityFX/framegeneration/fsr3/include/gpu/opticalflow/ffx_opticalflow_scale_optical_flow_advanced_v5.h`
+  → `of3_expand.comp` (bilinear upscale of coarse flow to display resolution)
+
+The GLSL adaptations are subgroup-free / SPD-library-free re-implementations so
+they compile with `glslangValidator` for Vulkan 1.1 (Adreno/Turnip-safe). They
+intentionally drop the SDK's HDR transfer-function handling, wave intrinsics
+(`ffxWaveSum`), `msad4`, packed-uint luma and groupshared SAD maps, none of
+which are portable to bare GLSL on this stack. See per-shader DEVIATION comments.
+
+FidelityFX SDK is distributed under the MIT License:
+
+```
+This file is part of the FidelityFX SDK.
+
+Copyright (C) Advanced Micro Devices, Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files(the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and /or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions :
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+```
+
+# THIRD-PARTY.md — win-fg attribution ledger
+
+
+> **Note (2026-09-09, v0.3.0):** the project is named **Win-FG Native** since the chain
+> moved into the host compositor. Every attribution below is unchanged by that
+> — the same shaders from the same sources are compiled into the host build and
+> into the layer `.so`. No third-party code was added by the move.
+Every third-party pattern, algorithm, or design idea used in win-fg —
+attributed by name, source, and license. This is the audit trail for the
+clean-room protocol described in `docs/PROVENANCE.md`.
+
+**No compiled binaries, no coefficient values, no SPIR-V bytecode** from any
+third party enter `libwin_fg.so`. Every pattern below is implemented from
+first principles or cited paper math; the entries here credit the design
+inspiration, not code re-use.
+
+---
+
+## Algorithms
+
+### AMD FidelityFX FSR3 optical flow
+- **License:** MIT (© AMD, GPUOpen)
+- **Source:** `GPUOpen-LibrariesAndSDKs/FidelityFX-SDK`
+- **Used for:** motion-estimation shader family (`of3_luma`, `of3_downsample`, `of3_flow`, `of3_expand`). Our subgroup-free reimplementation of the FSR3 luminance pyramid + coarse-to-fine SAD block search. See `NOTICE_FIDELITYFX_OPTICALFLOW.md`.
+- **Roadmap uses:**
+  - `feat/fb-consistency` — reference implementation study of `ffx_frameinterpolation_disocclusion_mask.glsl`
+  - `feat/flow-inpainting` — port pattern from `ffx_frameinterpolation_inpainting_pass.glsl` + inpainting pyramid pair
+  - `feat/correlation-cost9` — reference implementation study of `ffx_frameinterpolation_optical_flow_vector_field.glsl`
+  - `feat/fsr3-of-v5-alt-motion` (potential) — port `compute_optical_flow_advanced_pass_v5.glsl` as alternate motion estimator
+
+### Softmax splatting for video frame interpolation
+- **Reference:** Niklaus & Liu, *Softmax Splatting for Video Frame Interpolation*, CVPR 2020 (arxiv:2003.05534)
+- **Used for:** importance-weighted blend of warped candidates in `wfg_synth.comp`. We adapt the forward-splat importance weighting into a scatter-free backward-warp blend suitable for mobile real-time.
+
+### Horn-Schunck brightness constancy
+- **Reference:** Horn & Schunck, *Determining Optical Flow*, Artificial Intelligence 17, 1981. Public domain math.
+- **Used for:** photometric residual term in `wfg_synth.comp`.
+- **Roadmap uses:** `feat/flow-regularization` — TV-L1 smoothness prior successor to H-S L2.
+
+### Forward-backward consistency + occlusion detection
+- **Reference:** Sundaram, Brox, Keutzer, *Dense point trajectories by GPU-accelerated large displacement optical flow*, ECCV 2010 (also OCAI arxiv:2403.18092)
+- **Used for:** planned occlusion-gated confidence in `feat/fb-consistency` branch.
+
+### RAFT correlation cost volume + iterative refinement
+- **Reference:** Teed & Deng, *RAFT: Recurrent All-Pairs Field Transforms for Optical Flow*, ECCV 2020 (arxiv:2003.12039). BSD-3-Clause.
+- **Roadmap uses:** `feat/correlation-cost9` (3×3 cost lookup + sub-pixel parabola fit), `feat/warp-follow-refine` (iterative flow refinement).
+
+### Lucas-Kanade / Baker-Matthews inverse-compositional alignment
+- **Reference:** Baker & Matthews, *Lucas-Kanade 20 Years On: A Unifying Framework*, IJCV 2004. Szeliski, *Computer Vision: Algorithms and Applications*, Ch. 6.2.
+- **Roadmap uses:** `feat/global-motion-prewarp` — 6-parameter affine fit via LK gradient descent.
+
+### Sub-pixel parabola fit for cost-volume argmin
+- **Reference:** Lowe, *Distinctive Image Features from Scale-Invariant Keypoints*, IJCV 2004 §5.
+- **Roadmap uses:** `feat/correlation-cost9`.
+
+### TV-L1 optical flow / anisotropic smoothness prior
+- **Reference:** Chambolle & Pock, *A First-Order Primal-Dual Algorithm for Convex Problems*, JMIV 2011. Public domain math.
+- **Roadmap uses:** `feat/flow-regularization`.
+
+### Median filter as robust flow smoothing
+- **Reference:** Tukey, *Exploratory Data Analysis*, 1977. Public domain.
+- **Roadmap uses:** `feat/median-flow-filter`.
+
+---
+
+## Design patterns (no code copied)
+
+### Isygold Vegas-DXVK framegen kit (zlib/libpng, © isygold, 2026)
+- **HUD-rect exclusion push-constant API** — pattern borrowed for `feat/hud-rect-mask`; `wfg_synth.comp` implementation independent.
+- **GPU-saturation skip window** (N=5 slow-trips, W=60 skip window) — starting constants borrowed as tuning seed for `feat/gpu-saturation-skip`; behavior re-implemented.
+- **Tier-gated auto activation** (T2 ≤29 ms, T3 ≤33 ms) — Snapdragon starting points; state machine independent for `feat/tier-gated-auto`.
+- **Bimodal-dominance stats SSBO** — atomic-counter pattern for per-block regime classification. Adopted for `feat/adaptive-gate` diagnostics.
+- **Adreno TBDR occupancy notes** — 11.5 KB shared-memory cliff on A610, packed-atomicMin ordering trap. Adopted repo-wide as `<8 KB shared per workgroup` discipline.
+- **No source code, coefficient values, or SPIR-V bytecode copied.** See `docs/research/07-isygold-vegas-inspirations.md`.
+
+### maxjivi05 WinNative PR #537 [`frame-gen`]
+- **RAFT-family multi-pass architecture** (pyramid → conv → cost-volume → flow-reg → warp-follow → generate) — architectural pattern confirms our port plan; implementation independent from RAFT paper.
+- **Median filter on flow** — one-shader post-process pattern; implemented from Tukey 1977 for `feat/median-flow-filter`.
+- **Multi-input generate pass** (occlusion + features + flows) — synthesis binding pattern for `feat/fb-consistency` synth extension.
+- **Empirical confidence calibration workflow** — measure gate thresholds against ground-truth midpoints instead of hand-tune; adopted for `feat/capture-mode` + auto-calibration tool.
+- **Runtime `debug.<pkg>.<flag>` sysprop opt-in gate** — Android-native toggle pattern; adopted for SANFG deployment.
+- **No source code, coefficient values, or SPIR-V bytecode copied.** See `docs/research/06-max-winnative-inspirations.md`. Explicitly excluded from any porting: the `wnfg_XX_spv.h` pre-compiled blobs and `weights_v2/wnfg_XX.weights.fp16` coefficient values (provenance unverified).
+
+### AMD FSR 3.1 anti-ghosting fixes
+- **Ellipsoid color clamp** (replacing AABB) for ghost-streak reduction. Documented in FSR 3.1 release notes; adopted as pattern (not code) for possible `feat/ellipsoid-clamp` synth improvement.
+- **Velocity factor for bright-pixel flicker** — same source.
+- **"Identify UI by diffing with/without-UI frames"** — documented HUD-detector pattern in FSR3 docs; adopted as reference for `feat/heuristic-hud-detect`.
+
+### SmoothVideo Project (SVP) split-license model
+- **Design lesson:** GPL open motion-search + closed rendering worked for 20 years. Adopted operationally: our clean-room synth stays MIT; if we ever add a GPL algorithm we isolate it.
+
+---
+
+## Runtimes (Phase 2 — neural, not yet integrated)
+
+### RIFE v4.25 / IFNet
+- **License:** MIT (© hzwer)
+- **Source:** `hzwer/Practical-RIFE`
+- **Planned use:** `feat/rife-lite-fine-tune` — fine-tune RIFE-4.25.lite on self-captured Bannerlator game frame triplets with HUD-preservation loss extension. Ship modified weights under MIT.
+- **Warm-start weights:** hzwer's public MIT-licensed 4.25.lite checkpoint. Fine-tune on self-captured data erases the Vimeo90K pretraining taint through data replacement.
+
+### NCNN (Vulkan backend)
+- **License:** BSD-3-Clause (© Tencent)
+- **Source:** `Tencent/ncnn`
+- **Planned use:** `feat/ncnn-vulkan-inference` — inference runtime for the fine-tuned RIFE weights on Adreno-class hardware. Cross-vendor Vulkan; no Qualcomm lock-in.
+- **Additional:** `feat/rife-warp-kernel` may study/port `nihui/rife-ncnn-vulkan/warp_pack4.comp` (MIT) as fp16-aware bilinear-warp reference.
+
+### Qualcomm QNN Runtime (optional Snapdragon fast path)
+- **License:** Qualcomm proprietary, free-use runtime
+- **Source:** Maven `com.qualcomm.qti:qnn-runtime`
+- **Planned use:** `feat/qnn-htp-delegate` — Hexagon HTP inference path for Snapdragon devices. Fallback to NCNN Vulkan on other hardware. **Models we ship remain fully ours.**
+
+---
+
+## Explicitly NOT USED
+
+The following are read for algorithmic understanding only. **No code,
+kernels, weights, or bytecode from these enter `libwin_fg.so` in any
+form:**
+
+- **LSFG (Lossless Scaling)** — proprietary, closed. Redistributing any
+  extracted shader is the takedown pattern that killed bionic-fg.
+- **`lsfg-vk`** (PancakeTAS) — GPL-3.0 layer + user-supplied proprietary
+  DLL. GPL viral + provenance liability.
+- **DLSS3-FG, XeSS-FG** — proprietary NVIDIA / Intel closed weights.
+- **XVFI weights** — non-commercial research license.
+- **AMT weights** (all variants) — CC-BY-NC 4.0.
+- **HopperRender, mpv-frame-interpolator** — GPL-3.0 OpenCL kernels.
+  Viral license; read only for algorithm intuition.
+- **FFmpeg `libavfilter/vf_minterpolate.c`** — LGPL; academic reference only.
+- **Any `.spv` SPIR-V bytecode blob** shipped without matching `.comp`
+  source, including Isygold's `fg_median.spv` / `fg_warp.spv` and Max's
+  `wnfg_XX_spv.h` — treat as read-only. Re-implement from published math.
+
+---
+
+## Data formats / encoders
+
+### QOI (Quite OK Image) — lossless
+- **License:** public domain / MIT (© Dominic Szablewski). Spec: [qoiformat.org](https://qoiformat.org).
+- **Used for:** the lossless RGBA8 encoding of the training-data capture-mode output (`src/capture.hpp`). Our encoder is a clean-room implementation of the published QOI spec (no third-party code); the blobs are packed inside our own `.wfgcap` container. QOI is used because it is lossless (no JPEG/video artifacts to poison training) and cheap to encode (keeps the capture overhead low). See the capture-mode docs in `README.md`.
+
+---
+
+## Training data (Phase 2)
+
+- **Self-captured Bannerlator game footage** (Mode A: 120fps native capture; Mode B: pre-classical flow ground truth via the capture mode below) — the sole source for the final fine-tune data. Owned by us. Not redistributed.
+- **RIFE upstream pretraining checkpoint (Vimeo90K)** — used as warm-start only. Full data replacement in fine-tune erases the Vimeo90K taint.
+- **No scraped YouTube / Twitch / commercial-platform video** enters our training pipeline.
+
+---
+
+## Research documents
+
+Full research writeups with per-source citations live at
+[`docs/research/`](docs/research/):
+
+- `01-optical-flow-algorithms.md`
+- `02-learned-fg-models.md`
+- `03-training-pipelines.md`
+- `04-adreno-deployment.md`
+- `05-prior-art.md`
+- `06-max-winnative-inspirations.md`
+- `07-isygold-vegas-inspirations.md`
+- `08-reusable-shaders.md`
+- `ROADMAP.md`
+- `SANFG.md`
+
+Every research doc lists its sources at the bottom. This file summarizes
+the licenses of everything cited across all research docs.
+
+==============================================================================
+The LLVM Project is under the Apache License v2.0 with LLVM Exceptions:
+==============================================================================
+
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+    TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+    1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+    2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+    3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+    4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+    5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+    6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+    7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+    8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+    9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+    END OF TERMS AND CONDITIONS
+
+    APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "[]"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+    Copyright [yyyy] [name of copyright owner]
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+
+---- LLVM Exceptions to the Apache 2.0 License ----
+
+As an exception, if, as a result of your compiling your source code, portions
+of this Software are embedded into an Object form of such source code, you
+may redistribute such embedded portions in such Object form without complying
+with the conditions of Sections 4(a), 4(b) and 4(d) of the License.
+
+In addition, if you combine or link compiled forms of this Software with
+software that is licensed under the GPLv2 ("Combined Software") and if a
+court of competent jurisdiction determines that the patent provision (Section
+3), the indemnity provision (Section 9) or other Section of the License
+conflicts with the conditions of the GPLv2, you may retroactively and
+prospectively choose to deem waived or otherwise exclude such Section(s) of
+the License, but only in their entirety and only with respect to the Combined
+Software.
+
+==============================================================================
+Software from third parties included in the LLVM Project:
+==============================================================================
+The LLVM Project contains third party software which is under different license
+terms. All such code will be identified clearly using at least one of two
+mechanisms:
+1) It will be in a separate directory tree with its own `LICENSE.txt` or
+   `LICENSE` file at the top containing the specific license and restrictions
+   which apply to that software, or
+2) It will contain specific license and restriction terms at the top of every
+   file.
+
+==============================================================================
+Legacy LLVM License (https://llvm.org/docs/DeveloperPolicy.html#legacy):
+==============================================================================
+
+The libc++ library is dual licensed under both the University of Illinois
+"BSD-Like" license and the MIT license.  As a user of this code you may choose
+to use it under either license.  As a contributor, you agree to allow your code
+to be used under both.
+
+Full text of the relevant licenses is included below.
+
+==============================================================================
+
+University of Illinois/NCSA
+Open Source License
+
+Copyright (c) 2009-2019 by the contributors listed in CREDITS.TXT
+
+All rights reserved.
+
+Developed by:
+
+    LLVM Team
+
+    University of Illinois at Urbana-Champaign
+
+    http://llvm.org
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal with
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
+
+    * Redistributions of source code must retain the above copyright notice,
+      this list of conditions and the following disclaimers.
+
+    * Redistributions in binary form must reproduce the above copyright notice,
+      this list of conditions and the following disclaimers in the
+      documentation and/or other materials provided with the distribution.
+
+    * Neither the names of the LLVM Team, University of Illinois at
+      Urbana-Champaign, nor the names of its contributors may be used to
+      endorse or promote products derived from this Software without specific
+      prior written permission.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE
+SOFTWARE.
+
+==============================================================================
+
+Copyright (c) 2009-2014 by the contributors listed in CREDITS.TXT
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.

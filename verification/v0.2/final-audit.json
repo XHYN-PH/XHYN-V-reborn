@@ -1,0 +1,23 @@
+{
+  "result": "PASS",
+  "checks": 7742,
+  "file": "<build>/XHYN-V-0.2.apk",
+  "bytes": 94681742,
+  "sha256": "19e313795d9d497f8ee6979b32f50312ee4a8e70d7269933da0cbe52aaa3a8f1",
+  "metadata": {
+    "package": "com.xhynph.xhynv.reborn174",
+    "label": "XHYN V",
+    "version_name": "0.2",
+    "version_code": "200",
+    "min_sdk": "30",
+    "target_sdk": "36"
+  },
+  "original_classes": 3022,
+  "final_classes": 3103,
+  "original_native_libraries": 25,
+  "dictionary_entries": 4761,
+  "device_gameplay_tested": false,
+  "android_ui_execution_tested": false,
+  "physical_gpu_probe_tested": false,
+  "scope": "Signed artifact structure, exact native modifications, preserved features, helper linkage and host/ARM64 checks; not gameplay qualification"
+}
