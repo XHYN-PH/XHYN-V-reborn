@@ -20,7 +20,7 @@ error reporting remains selected.
 English presentation covers the newer trainer, frame-generation and retained
 download pages. The exact-build locale gate and English font/text selectors are
 patched. Original feature classes, method signatures, libraries, resource IDs and
-notices remain; one new native helper is added. About links point to XHYN's
+notices remain; one new native helper is added. About inside System, directly below Game Resources, links to XHYN's
 Telegram, YouTube and GitHub. Original author/dependency credits remain.
 
 The build runs English, graphics, config, driver and log host checks; an actual
@@ -28,9 +28,11 @@ upstream DXVK parser; original-fault/patched-path ARM64 checks; native report an
 probe-failure host checks; shader validation; signature and final artifact audits.
 Raw user crash bundles, proprietary source and private port sources are excluded.
 
-No Android UI, physical GPU probe, sustained gameplay, cross-device FPS comparison
+No physical Android-device UI, GPU probe, sustained gameplay, cross-device FPS comparison
 or audio soak test was available in this cloud session. This is a development
 prerelease. Device reports should identify GPU, Android build, driver, renderer,
 game version and reproduction steps.
 
 The mod-spawn provider authority follows the XHYN application ID. External companion tools targeting the original package authority need to select the XHYN authority instead. Internal references are updated together.
+
+Hotfix 1 additionally checks launcher routes and constructor inheritance before packaging, and runs API 30 Android-view regression tests. The separate settings Activity is removed. Controls are divided across Display, Performance, Vulkan Drivers, DXVK and Diagnostics; the original driver picker is the only importer/selector. Invalid old overrides do not erase saved text or become a folder-validation failure. See the sanitized additional crash triage in docs/issues.

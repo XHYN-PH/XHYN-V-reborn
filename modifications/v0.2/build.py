@@ -27,6 +27,9 @@ def main():
     parser.add_argument('--tools-dir', required=True, type=Path, help='Jars from android-toolchain-manifest.json')
     parser.add_argument('--apktool', required=True, type=Path)
     parser.add_argument('--ndk-root', required=True, type=Path, help='Android NDK r27c (27.2.12479018)')
+    parser.add_argument('--ui-classpath-file',required=True,type=Path,help='Robolectric/JUnit classpath resolved from tests/ui/pom.xml')
+    parser.add_argument('--enjarify-root',required=True,type=Path,help='Pinned Enjarify checkout for prepackage Android-view checks')
+    parser.add_argument('--verify-only',action='store_true',help='Run all checks and stop before APK packaging/signing')
     parser.add_argument('--java-home', type=Path, help='JDK 17; otherwise use PATH')
     parser.add_argument('--keystore', type=Path, help='Optional signing key; never copied into outputs')
     parser.add_argument('--key-alias')
@@ -94,6 +97,7 @@ def main():
     run('native-guards', [sys.executable, PACKAGE / 'patch_native_guards.py'])
     run('ui-patch', [sys.executable, PACKAGE / 'apply_ui_english.py'])
     run('runtime-patch', [sys.executable, PACKAGE / 'apply_runtime.py'])
+    run('launcher-structure-checks',[sys.executable,PACKAGE/'tests/check_launcher_structure.py'])
     run('native-component', [sys.executable, PACKAGE / 'build_native.py'])
     run('native-component-host', [sys.executable, PACKAGE / 'tests/run_native_component.py'])
 
@@ -134,11 +138,15 @@ def main():
     run('log-host-checks', [java, '-cp', classpath, 'LogHostChecks', work / 'log-host-tests'])
     run('config-host-checks', [sys.executable, PACKAGE / 'tests/run_config_checks.py'])
     run('native-guard-tests', [sys.executable, PACKAGE / 'test_native_guards.py'])
-    unsigned = work / 'XHYN-V-0.2-unsigned.apk'
+    run('launcher-ui-checks',[sys.executable,PACKAGE/'tests/run_launcher_ui.py','--work-dir',work,'--tools-dir',tools,'--classpath-file',args.ui_classpath_file.resolve(strict=True),'--enjarify-root',args.enjarify_root.resolve(strict=True)])
+    if args.verify_only:
+        print('All prepackage checks passed; APK packaging and signing were not started.',flush=True)
+        return
+    unsigned = work / 'XHYN-V-0.2-Hotfix1-unsigned.apk'
     run('package', [java, '-jar', apktool, 'b', work / 'decoded', '-p', work / 'framework', '-o', unsigned])
     final = unsigned
     if signing:
-        final = work / 'XHYN-V-0.2.apk'
+        final = work / 'XHYN-V-0.2-Hotfix1.apk'
         run('sign', [java, '-jar', tools / 'apksigner.jar', 'sign', '--ks', args.keystore, '--ks-key-alias', args.key_alias, '--ks-pass', 'file:' + str(args.password_file), '--v4-signing-enabled', 'false', '--alignment-preserved', 'false', '--lib-page-alignment', '16384', '--out', final, unsigned])
         signature = run('signature-verification', [java, '-jar', tools / 'apksigner.jar', 'verify', '--verbose', '--print-certs', final])
         (reports / 'signature-verification.txt').write_text(signature)

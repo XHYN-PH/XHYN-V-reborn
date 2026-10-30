@@ -1,0 +1,111 @@
+{
+  "engine": {
+    "input_sha256": "1462d59dd75e2b87f08a5d7528442a628b153f385214436e5de8b5cf595f98e1",
+    "output_sha256": "c84725a595b3bc6b7bcf68d9d4331103775c1486d3225e43c2f73589b15058ba",
+    "edits": [
+      {
+        "label": "Audio header validation thunk",
+        "address": "0xfcee24",
+        "offset": 16559652,
+        "before": "680240f9e00313aae10314aa087d40f900013fd6e00e00b4",
+        "after": "800000b4090040f9490000b47ec5661400008012c0035fd6"
+      },
+      {
+        "label": "Check header before audio packing accessor",
+        "address": "0x2980424",
+        "offset": 43500580,
+        "before": "090040f9",
+        "after": "803a9917"
+      },
+      {
+        "label": "Null allocation constructor thunk",
+        "address": "0xfcee74",
+        "offset": 16559732,
+        "before": "680240f9f40300aae00313aa",
+        "after": "400000b4ca2c7214c0035fd6"
+      },
+      {
+        "label": "Check allocation before constructing startup object",
+        "address": "0x2c5a41c",
+        "offset": 46490652,
+        "before": "61ffff97",
+        "after": "96d28d97"
+      },
+      {
+        "label": "Reject invalid audio object vtables and methods",
+        "address": "0xfceea4",
+        "offset": 16559780,
+        "before": "087d40f900013fd6400b00b4680240f9e10300aae2b4ff9042e40491a3b5ffd063a42291088540f9e00313aa00013fd6000a00b4e20300aae00313aae10314aae3031f2ad5070094680240f9f40300aae00313aa089143f900013fd6e8031f2ab40800b4",
+        "after": "501801b010a217913f0110ebe3010054b02401b0102205913f0110eb62010054291d40f9f0fffff010023b913f0110ebc30000543018019010a202913f0110eb42000054bd776814a00080520100009021903f910200009042d03f91e4108c94f4776814"
+      },
+      {
+        "label": "Validate mixer receiver before virtual dispatch",
+        "address": "0x29ecdd8",
+        "offset": 43945432,
+        "before": "291d40f9",
+        "after": "33889717"
+      },
+      {
+        "label": "Audio guard diagnostic",
+        "address": "0xfcefe4",
+        "offset": 16560100,
+        "before": "3fe90171810100",
+        "after": "5848594e205600"
+      },
+      {
+        "label": "Audio guard diagnostic",
+        "address": "0xfceff4",
+        "offset": 16560116,
+        "before": "e8179f1a08000014e0031f2ac81640f9a9835ff81f0109eb0003005424000014e8031f2af403082a680240f9e00313aa089143f900013fd61f1c0072a00000546802",
+        "after": "417564696f20677561726420736b697070656420616e20696e76616c696420766f6963653b20696e7370656374207468652073657373696f6e207265706f72742e00"
+      },
+      {
+        "label": "Unwind rules for called and interior guard thunks",
+        "address": "0xa5b9b1",
+        "offset": 10860977,
+        "before": "440eb001500c1d3093029404950696089e0a9d0c0a03b4030c1fb001500e00d3d4d5d6dedd440b",
+        "after": "0c1f0008130814081d081e0300020c1d20930294049d089e060300010c1f0008130814081d081e"
+      }
+    ],
+    "size_dynamic_symbols_relocations_and_unwind_index_preserved": true,
+    "packing_thunk": "0xfcee24",
+    "factory_thunk": "0xfcee74",
+    "audio_thunk": "0xfceea4",
+    "audio_failure": "0xfceeec",
+    "audio_logger": "0x32d3290",
+    "audio_exit": "0x29eced4",
+    "vtable_range": [
+      "0x32d75e8",
+      "0x3463148"
+    ],
+    "method_range": [
+      "0xfcdec0",
+      "0x32d20a8"
+    ],
+    "audio_scope": "Protect observed invalid header and in-engine receiver paths; underlying lifetime/corruption cause remains unproven."
+  },
+  "dxvk": {
+    "input_sha256": "6e081a67ce0bcbf3838fcd68964c8c2601a0fe044735cee7e3f3a57ed00037cd",
+    "output_sha256": "4e719caa483e842403e9251009c477ef0db9d73c4572e8a000b0dcc4c7aea9e7",
+    "edits": [
+      {
+        "label": "Missing optional sample-location command adapter",
+        "address": "0x352314",
+        "offset": 3466004,
+        "before": "000000000000000000000000",
+        "after": "480000b400011fd6c0035fd6"
+      },
+      {
+        "label": "Route optional sample-location enable through null guard",
+        "address": "0x27d468",
+        "offset": 2593896,
+        "before": "00013fd6",
+        "after": "ab530394"
+      }
+    ],
+    "size_dynamic_symbols_relocations_and_unwind_index_preserved": true,
+    "shim": "0x352314",
+    "scope": "Skip a missing optional dynamic command; preserve supported dispatch and the separate sample-location setup call. No feature-support flags are falsified."
+  },
+  "runtime_validation": "Pending Android driver/gameplay testing; CPU and unwind checks are separate."
+}

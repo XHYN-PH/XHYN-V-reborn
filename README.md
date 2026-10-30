@@ -4,7 +4,7 @@
 
 **XHYN V brings GTA V to Android with touch controls, graphics and driver settings, and a Story Mode trainer.** Maintained by **XHYN-PH**, this edition brings setup and performance controls together so you can adjust the game for your device.
 
-**[Download XHYN V 0.2](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.2)** · **[Telegram](https://t.me/xhynv)** · **[YouTube](https://youtube.com/@xhyn_ph)** · **[Buy GTA V](https://store.rockstargames.com/game/buy-gta-v)**
+**[Download XHYN V 0.2 Hotfix 1](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.2-hotfix1)** · **[Telegram](https://t.me/xhynv)** · **[YouTube](https://youtube.com/@xhyn_ph)** · **[Buy GTA V](https://store.rockstargames.com/game/buy-gta-v)**
 
 ## What does this project provide?
 
@@ -40,12 +40,12 @@ XHYN V is therefore **a native ARM64 Android port with graphics API translation 
 - **Graphics and memory controls:** render resolution/scale, individual quality options, a lower-settings shortcut, population density, draw distance and texture-detail settings.
 - **Frame-rate controls:** rendered FPS cap, VSync and frame latency, with separate rendered/generated FPS labels for optional frame generation.
 - **DXVK configuration:** bundled/imported renderer selection, shader compiler controls and a `dxvk.conf` editor with import, enable/disable and an effective-settings preview.
-- **Vulkan drivers:** System Vulkan, imported Android Vulkan drivers, experimental PanVK/Mali and Xclipse paths, plus Turnip GMEM/SYSMEM and One UI controls. Custom drivers require a separate draw/present check. A passing check does not guarantee the game will work.
+- **Vulkan drivers:** System Vulkan, imported Android Vulkan drivers, experimental PanVK/Mali and Xclipse paths, plus Turnip GMEM/SYSMEM and One UI controls. An optional draw/present check helps identify driver problems; a pass does not guarantee gameplay compatibility.
 - **Shader caches:** separate cache locations by renderer and driver package, preserved across launches, with manual cleanup.
 - **Story Mode trainer:** character, vehicle, weapon and world options, vehicle customization, favorites and presets.
 - **Mods and custom radio:** resource-mod import interfaces, supported audio importing, previews and Self Radio management. ASI/DLL loading is not provided.
 - **Diagnostics:** timed memory/I/O capture, reports tied to each game attempt, script/API mismatch reporting, and clearer engine/device-loss errors.
-- **Project links:** an About button beside System opens Telegram, YouTube and this repository. Menus and trainer presentation are in English, with no Chinese system-language requirement.
+- **Project links:** an About page inside System, below Game Resources opens Telegram, YouTube and this repository. Menus and trainer presentation are in English, with no Chinese system-language requirement.
 
 XHYN V 0.2 uses the newer 1.7.26 runtime and retains its download page, PC-style trainer, touch layouts, custom radio and frame-generation options. Frame generation starts disabled on fresh installs. Compatibility and performance depend on your device, driver, settings and game data; experimental driver support does not imply support for every GPU.
 
@@ -55,12 +55,12 @@ XHYN V 0.2 uses the newer 1.7.26 runtime and retains its download page, PC-style
 - Your own compatible **GTA V Legacy** files, including English text and fonts. The project's documented baseline is **1.61 / build 2699**.
 - Enough storage for the game, caches and imported content.
 
-1. Download and install the APK from the [release page](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.2).
+1. Download and install the APK from the [release page](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.2-hotfix1).
 2. Grant the requested file access and select the folder containing `common.rpf`, `x64` and `update`.
-3. Open **Performance → XHYN V · Performance and drivers** to adjust graphics. Start with System Vulkan and lower settings if your device struggles.
+3. Use **Display** for graphics, **Performance** for FPS, **Vulkan Drivers** for drivers, **DXVK** for configuration and **System → Diagnostics** for reports. Start with System Vulkan and lower settings if your device struggles.
 4. Fully close and reopen the game after changing its driver, renderer or graphics settings. Graphics-file overrides take effect once the game has created `save/settings.xml`.
 
-Version 0.2 is a **development prerelease**, using the same app ID and release key as our previous English edition so it can install as an update. Device gameplay and GPU compatibility still need testing. Earlier editions with different app IDs remain separate installations.
+Version 0.2 Hotfix 1 is a **development prerelease**, using the same app ID and release key as our previous English edition so it can install as an update. Device gameplay and GPU compatibility still need testing. Earlier editions with different app IDs remain separate installations.
 
 ## Source and credits
 

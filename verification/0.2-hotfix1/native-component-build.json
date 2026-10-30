@@ -1,0 +1,19 @@
+{
+  "probe.vert": {
+    "source_sha256": "9bc6eb00f50a8b5f0cd38827b7a9ce1454084c531b5dbea3f281dd5e8e5ea23e",
+    "spirv_sha256": "a4180050b695c94488991672f584d39820c7b68590e44e4d8ce3f395de008e09",
+    "validated": true
+  },
+  "probe.frag": {
+    "source_sha256": "a242caab261c92c9bd9bbcd5b16767a1ebdc0d395810ce8ea048de932e4d6112",
+    "spirv_sha256": "4805f66d19e9a9ba5dccefc5fcfffbe612fb570988fb91b9a85230183140514f",
+    "validated": true
+  },
+  "library": {
+    "sha256": "d3b19530b7886c26369532bc00ea7077f5c13a58cfbaab65ab614b88810ec5ba",
+    "bytes": 64784
+  },
+  "ndk_revision": "27.2.12479018",
+  "minimum_android_api": 30,
+  "validation": "Native compilation and SPIR-V validation; physical driver execution remains untested"
+}

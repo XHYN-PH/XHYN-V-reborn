@@ -44,6 +44,7 @@ __attribute__((noreturn, noinline)) static void controlled_stop(uint32_t code) {
     snprintf(file, sizeof(file), "%s/xhyn-native-error.txt", private_root);
     snprintf(stage, sizeof(stage), "%s/xhyn-native-error.part", private_root);
     const char *reason = code == 0x9cf7bd06u ? "Graphics device initialization or device-loss failure"
+                       : code == 0xe79d84ffu ? "The selected renderer could not create a compatible graphics device"
                        : code == 0x8392273du ? "Invalid resource mapping during loading"
                        : "The engine reported an unrecoverable error";
     int fd = open(stage, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0600);

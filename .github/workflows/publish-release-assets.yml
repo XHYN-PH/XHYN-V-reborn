@@ -8,8 +8,8 @@ on:
       version:
         description: Release to attach downloads to
         type: choice
-        default: v0.2
-        options: [v0.2, v1.7.4-en]
+        default: v0.2-hotfix1
+        options: [v0.2-hotfix1, v0.2, v1.7.4-en]
 
 permissions:
   contents: write
@@ -28,6 +28,10 @@ jobs:
         run: |
           set -euo pipefail
           case "$RELEASE_TAG" in
+            v0.2-hotfix1)
+              artifact_folder=0.2-hotfix1
+              artifact_prefix=XHYN-V-0.2-Hotfix1
+              ;;
             v0.2)
               artifact_folder=0.2
               artifact_prefix=XHYN-V-0.2

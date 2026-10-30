@@ -103,14 +103,14 @@ with zipfile.ZipFile(original) as a,zipfile.ZipFile(final) as b,final.open('rb')
             # javac resolves inherited platform methods against the pinned Android API jar.
             resolved=resolved or owner.startswith(('Landroid/','Ljava/'))
             check(resolved,'Helper and app method linkage '+target)
-    check('Lcom/gtavsource/android/XhynV02Menu;->about(Landroid/app/Activity;)V' in nm,'About dialog packaged')
+    check('Lcom/gtavsource/android/XhynV02Menu;->about(Landroid/app/Activity;)V' in nm,'About System page packaged')
     check('https://t.me/xhynv' in str(nc['Lcom/gtavsource/android/XhynV02Menu;'].get_fields()) or b'https://t.me/xhynv' in b.read('classes7.dex'),'Telegram link packaged')
 
 A=APK(str(original));B=APK(str(final));android='{http://schemas.android.com/apk/res/android}'
 meta={'package':B.get_package(),'label':B.get_app_name(),'version_name':B.get_androidversion_name(),'version_code':B.get_androidversion_code(),'min_sdk':B.get_min_sdk_version(),'target_sdk':B.get_target_sdk_version()}
-check(meta['package']=='com.xhynph.xhynv.reborn174' and meta['label']=='XHYN V' and meta['version_name']=='0.2' and meta['version_code']=='200','XHYN V 0.2 application identity')
+check(meta['package']=='com.xhynph.xhynv.reborn174' and meta['label']=='XHYN V' and meta['version_name']=='0.2-hotfix1' and meta['version_code']=='201','XHYN V 0.2 application identity')
 check(set(A.get_permissions())==set(B.get_permissions()),'No added Android permissions')
-check(set(A.get_activities())|{'com.gtavsource.android.XhynV02PerformanceActivity','com.gtavsource.android.XhynV02ProbeActivity'}==set(B.get_activities()),'Original activities plus own settings/probe activities')
+check(set(A.get_activities())|{'com.gtavsource.android.XhynV02ProbeActivity'}==set(B.get_activities()),'Original launcher activities plus private probe; no standalone settings Activity')
 check(set(A.get_services())==set(B.get_services()),'Original download and diagnostic services retained')
 app=B.get_android_manifest_xml().find('application')
 probe=next(x for x in app.findall('activity') if x.get(android+'name')=='com.gtavsource.android.XhynV02ProbeActivity')
@@ -122,7 +122,11 @@ def resources(apk):
     x=ET.fromstring(apk.get_android_resources().get_public_resources(apk.get_package()))
     return {(n.get('type'),n.get('name'),n.get('id')) for n in x}
 check(resources(A)==resources(B),'Original public resource IDs retained')
-result={'result':'PASS','checks':len(checks),'file':str(final),'bytes':final.stat().st_size,'sha256':digest(final.read_bytes()),'metadata':meta,'original_classes':len(oc),'final_classes':len(nc),'original_native_libraries':len(oldlibs),'dictionary_entries':len(dictionary),'device_gameplay_tested':False,'android_ui_execution_tested':False,'physical_gpu_probe_tested':False,'scope':'Signed artifact structure, exact native modifications, preserved features, helper linkage and host/ARM64 checks; not gameplay qualification'}
+ui_model=json.loads((R/'reports/launcher-ui-model.json').read_text())
+check(ui_model['result']=='PASS','Prepackage Android-view regression suite passed')
+check(ui_model['test_source_sha256']==digest((Path(__file__).resolve().parent/'tests/ui/LauncherUiChecks.java').read_bytes()),'UI suite matches the published test source')
+check((R/'reports/launcher-structure-checks.txt').read_text().startswith('PASS '),'Constructor and launcher-route checks passed')
+result={'result':'PASS','checks':len(checks),'file':str(final),'bytes':final.stat().st_size,'sha256':digest(final.read_bytes()),'metadata':meta,'original_classes':len(oc),'final_classes':len(nc),'original_native_libraries':len(oldlibs),'dictionary_entries':len(dictionary),'device_gameplay_tested':False,'android_ui_execution_tested':False,'host_android_view_tests':True,'physical_gpu_probe_tested':False,'scope':'Signed artifact structure, exact native modifications, preserved features, helper linkage and host/ARM64 checks; not gameplay qualification'}
 (R/'reports/final-audit.json').write_text(json.dumps(result,indent=2)+'\n')
 (R/'reports/final-audit-checks.txt').write_text('\n'.join(checks)+'\n')
 print(json.dumps(result,indent=2))

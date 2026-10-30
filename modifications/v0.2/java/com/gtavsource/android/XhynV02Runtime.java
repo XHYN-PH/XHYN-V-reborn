@@ -19,6 +19,12 @@ import java.util.concurrent.*;
 
 /** Launch-time configuration and bounded, explicitly requested reports. */
 public final class XhynV02Runtime {
+    public static final class LaunchSetupFailure extends RuntimeException {
+        LaunchSetupFailure(String message, Throwable cause) { super(message,cause); }
+    }
+    public static String launchFailureTitle(RuntimeException failure) {
+        return failure instanceof LaunchSetupFailure ? "Graphics setup failed" : "Invalid game folder";
+    }
     private static volatile File session;
     private static volatile String sessionId;
     private static ScheduledExecutorService capture;
@@ -44,8 +50,14 @@ public final class XhynV02Runtime {
     public static String driverKey(RuntimeConfig cfg) throws Exception {
         if (!"custom".equals(cfg.get("vulkan", "driver", "system"))) return "system-" + digest(Build.FINGERPRINT);
         File file = new File(cfg.drivers, cfg.get("vulkan", "driver_zip", ""));
-        if (!file.getCanonicalFile().getParentFile().equals(cfg.drivers.getCanonicalFile())) throw new IOException("Driver must be inside Drivers");
-        return hash(file);
+        try {
+            if (!file.getCanonicalFile().getParentFile().equals(cfg.drivers.getCanonicalFile()) || !file.isFile()) throw new IOException("Driver package unavailable");
+            return hash(file);
+        } catch(IOException unavailable) {
+            // Leave actual admission/fallback to DriverManager. A missing old ZIP is
+            // a driver selection problem, not an invalid game directory.
+            return "unavailable-"+digest(cfg.get("vulkan","driver_zip","")+":"+Build.FINGERPRINT);
+        }
     }
 
     private static String digest(String value) throws Exception {
@@ -104,7 +116,8 @@ public final class XhynV02Runtime {
         return out;
     }
 
-    public static String preview(Context context, RuntimeConfig cfg) throws Exception {
+    public static String preview(Context context, RuntimeConfig cfg) throws Exception { return preview(context,cfg,true); }
+    private static String preview(Context context, RuntimeConfig cfg, boolean includeSaved) throws Exception {
         Map<String, String> values = new LinkedHashMap<>();
         for (String entry : StableFrameProfile.config(cfg).split(";")) {
             String key = XhynV02Config.key(entry);
@@ -121,21 +134,29 @@ public final class XhynV02Runtime {
         if (supported.contains("d3d11.samplerLodBias") && cfg.getBoolean("xhyn", "texture_lod", false)) values.put("d3d11.samplerLodBias", "1.0");
         // Only emit managed options present in this renderer's own option table.
         if (!supported.isEmpty()) values.keySet().retainAll(supported);
-        return XhynV02Config.effective(values, XhynV02Config.read(saved(cfg)), cfg.getBoolean("xhyn", "dxvk_conf_enabled", true));
+        boolean enabled=includeSaved && cfg.getBoolean("xhyn","dxvk_conf_enabled",true);
+        return XhynV02Config.effective(values,enabled?XhynV02Config.read(saved(cfg)):"",enabled);
     }
 
     public static void configure(Activity activity, RuntimeConfig cfg) {
         try {
             activity.getSharedPreferences("xhyn-v02", 0).edit().putString("gameRoot", cfg.root.getPath()).apply();
-            if ("custom".equals(cfg.get("vulkan", "driver", "system"))) {
-                JSONObject checked = lastProbe(activity, cfg);
-                if (checked == null || !"PASS".equals(checked.getJSONObject("result").optString("status")))
-                    throw new IOException("Run Performance and drivers → Check selected driver before launching this custom driver");
-            }
+            // Existing imported drivers must not become unusable merely because a new,
+            // optional readiness test has no saved result. DriverPackage still validates loading.
             // Old builds used this filename. Migrate once and never overwrite saved edits.
             File legacy = new File(cfg.root, "Config/xhyn-dxvk.conf");
-            if (!saved(cfg).exists() && legacy.isFile()) XhynV02Config.write(saved(cfg), XhynV02Config.read(legacy));
-            String text = preview(activity, cfg);
+            String warning="";
+            try {
+                if(!saved(cfg).exists() && legacy.isFile())XhynV02Config.write(saved(cfg),XhynV02Config.read(legacy));
+            } catch(IOException invalidLegacy) {
+                warning="The old dxvk.conf could not be imported: "+invalidLegacy.getMessage()+". The original file has been kept.";
+            }
+            String text;
+            try { text=preview(activity,cfg); }
+            catch(IOException invalidOverrides) {
+                warning+=(warning.isEmpty()?"":"\n")+"Saved dxvk.conf overrides could not be applied: "+invalidOverrides.getMessage()+". Managed settings are used for this launch; your saved text has been kept.";
+                text=preview(activity,cfg,false);
+            }
             XhynV02Config.write(effective(activity), text);
             // Empty, rather than absent: engine SDL_main otherwise inserts its own competing config.
             Os.setenv("DXVK_CONFIG", "", true);
@@ -148,14 +169,30 @@ public final class XhynV02Runtime {
             Os.setenv("MESA_SHADER_CACHE_DIR", new File(cache, "mesa").getAbsolutePath(), true);
             Map<String, String> graphics = new LinkedHashMap<>();
             for (String name : XhynV02Graphics.QUALITY) {
-                String value = cfg.get("xhyn_graphics", name, ""); if (!value.isEmpty()) graphics.put(name, value);
+                String value = cfg.get("xhyn_graphics",name.toLowerCase(Locale.ROOT),cfg.get("xhyn_graphics",name,"")); if (!value.isEmpty()) graphics.put(name, value);
             }
             for (String name : Arrays.asList("ScreenWidth", "ScreenHeight", "VSync", "LodScale", "PedLodBias", "VehicleLodBias", "CityDensity", "PedVarietyMultiplier", "VehicleVarietyMultiplier", "Shadow_ParticleShadows", "Shadow_LongShadows", "Shadow_SoftShadows")) {
-                String value = cfg.get("xhyn_graphics", name, ""); if (!value.isEmpty()) graphics.put(name, value);
+                String value = cfg.get("xhyn_graphics",name.toLowerCase(Locale.ROOT),cfg.get("xhyn_graphics",name,"")); if (!value.isEmpty()) graphics.put(name, value);
             }
-            boolean applied = XhynV02Graphics.apply(new File(cfg.root, "save"), graphics);
+            boolean applied;
+            try { applied=XhynV02Graphics.apply(new File(cfg.root,"save"),graphics); }
+            catch(Exception invalidOverrides) {
+                applied=false;
+                warning+=(warning.isEmpty()?"":"\n")+"Graphics overrides were not applied: "+invalidOverrides.getMessage()+". The game's settings file was left intact.";
+            }
             begin(activity, cfg, text, cache, applied);
-        } catch (Exception failure) { throw new IllegalStateException("Could not prepare XHYN V graphics settings. Review dxvk.conf and settings.xml: " + failure.getMessage(), failure); }
+            if(!warning.isEmpty()) {
+                XhynV02Config.write(new File(session,"setup-warning.txt"),warning);
+                activity.runOnUiThread(()->android.widget.Toast.makeText(activity,"Some graphics overrides could not be applied. See Diagnostics for details.",android.widget.Toast.LENGTH_LONG).show());
+            }
+        } catch (Exception failure) {
+            try {
+                java.io.StringWriter detail=new java.io.StringWriter();failure.printStackTrace(new java.io.PrintWriter(detail));
+                JSONObject report=new JSONObject().put("time_ms",System.currentTimeMillis()).put("pid",android.os.Process.myPid()).put("gameRoot",cfg.root.getPath()).put("message",failure.toString()).put("stack",detail.toString());
+                XhynV02Config.write(new File(activity.getFilesDir(),"xhyn-launch-error.json"),report.toString(2));
+            } catch(Exception logging) { Log.w("XHYN V","Could not record startup error",logging); }
+            throw new LaunchSetupFailure("Could not prepare graphics settings: "+failure.getMessage()+". See Diagnostics for the startup report.",failure);
+        }
     }
 
     private static String rendererHash(RuntimeConfig cfg) throws Exception {
@@ -176,7 +213,7 @@ public final class XhynV02Runtime {
         }
         JSONObject details = new JSONObject();
         details.put("session", sessionId).put("pid", android.os.Process.myPid()).put("start_ms", System.currentTimeMillis())
-                .put("version", "0.2").put("fingerprint", Build.FINGERPRINT).put("model", Build.MANUFACTURER + " " + Build.MODEL)
+                .put("version", "0.2-hotfix1").put("fingerprint", Build.FINGERPRINT).put("model", Build.MANUFACTURER + " " + Build.MODEL)
                 .put("requested_driver", driverKey(cfg)).put("renderer_source", cfg.get("dxvk", "source", "builtin"))
                 .put("renderer_id", cfg.get("dxvk", "builtin_id", "")).put("renderer_zip_hash", rendererHash(cfg))
                 .put("cache", cache.getAbsolutePath()).put("graphics_applied", graphicsApplied)
@@ -283,6 +320,15 @@ public final class XhynV02Runtime {
         } catch (Exception ignored) { }
         return "No engine error report for the most recent attempt.";
     }
+    public static String startupError(Context context) {
+        try {
+            String last=context.getSharedPreferences("xhyn-v02",0).getString("lastSession","");
+            String notice=last.matches("[A-Za-z0-9-]{1,100}")?XhynV02Config.read(new File(context.getFilesDir(),"xhyn-sessions/"+last+"/setup-warning.txt")):"";
+            String value=XhynV02Config.read(new File(context.getFilesDir(),"xhyn-launch-error.json"));
+            return (notice.isEmpty()?"":"Latest session settings notice:\n"+notice+"\n\n")+(value.isEmpty()?"No startup setup error has been recorded.":"Last startup error (see its timestamp):\n"+value);
+        }
+        catch(Exception error){return "Could not read the startup report: "+error.getMessage();}
+    }
 
     public static void initialize(Context context) {
         application = context.getApplicationContext();
@@ -295,7 +341,6 @@ public final class XhynV02Runtime {
     public static void refreshMenu(GameMenuActivity activity) {
         try { if (activity.config != null) activity.config = RuntimeConfig.load(activity.config.root); }
         catch (Exception failure) { Log.w("XHYN V", "Could not refresh launcher settings", failure); }
-        XhynV02Menu.decorate(activity);
         android.content.SharedPreferences prefs = activity.getSharedPreferences("xhyn-v02", 0);
         String last = prefs.getString("lastSession", "");
         String error = lastError(activity);
@@ -305,7 +350,7 @@ public final class XhynV02Runtime {
                     : error.contains("0x8392273d") ? "The engine stopped while mapping a resource. The session report records where it failed."
                     : "The engine reported an unrecoverable error and stopped. A report was saved for this attempt.";
             new android.app.AlertDialog.Builder(activity).setTitle("Game stopped").setMessage(message + "\n\nOpen Performance and drivers to export the report. Use Play to start a fresh attempt.")
-                    .setPositiveButton("Close", null).setNeutralButton("Reports and settings", (d,w) -> XhynV02PerformanceActivity.open(activity)).show();
+                    .setPositiveButton("Close", null).setNeutralButton("Reports and settings", (d,w) -> XhynV02Settings.open(activity)).show();
         }
     }
     public static void gameStopped() {

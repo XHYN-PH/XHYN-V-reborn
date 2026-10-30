@@ -1,0 +1,24 @@
+{
+  "result": "PASS",
+  "checks": 7752,
+  "file": "<build>/XHYN-V-0.2-Hotfix1.apk",
+  "bytes": 94681742,
+  "sha256": "e273ac0e754f92d0e0b3b9ad74e105996a79d0790b81e9b33fee1dc753e0753e",
+  "metadata": {
+    "package": "com.xhynph.xhynv.reborn174",
+    "label": "XHYN V",
+    "version_name": "0.2-hotfix1",
+    "version_code": "201",
+    "min_sdk": "30",
+    "target_sdk": "36"
+  },
+  "original_classes": 3022,
+  "final_classes": 3094,
+  "original_native_libraries": 25,
+  "dictionary_entries": 4761,
+  "device_gameplay_tested": false,
+  "android_ui_execution_tested": false,
+  "host_android_view_tests": true,
+  "physical_gpu_probe_tested": false,
+  "scope": "Signed artifact structure, exact native modifications, preserved features, helper linkage and host/ARM64 checks; not gameplay qualification"
+}

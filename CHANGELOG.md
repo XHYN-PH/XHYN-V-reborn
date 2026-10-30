@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2 Hotfix 1 — 30 October 2026
+
+- Restored System navigation, Diagnostics and the Game Resources page.
+- Moved About inside System, below Game Resources.
+- Matched added controls to the launcher and separated them across the existing pages.
+- Removed the duplicate driver picker; imports and selection use Vulkan Drivers.
+- Fixed graphics settings saving and misleading game-folder errors during setup.
+- Kept old configuration text when its overrides cannot be applied.
+
+
 ## 0.2 — 29 October 2026
 
 - Updated the runtime and PC-style trainer, with English menus and the transparent XHYN V logo.

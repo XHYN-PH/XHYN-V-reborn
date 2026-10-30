@@ -1,0 +1,11 @@
+{
+  "result": "PASS",
+  "classes_translated": 3094,
+  "android_api": 30,
+  "framework": "Robolectric 4.14.1",
+  "enjarify_revision": "6364dfb30f7862873b84ec5fad1d1286c526ba0b",
+  "translated_jar_sha256": "91d1712837a0c21ee3ed4317e6d858d806200f416cbe04433900a5337be605a3",
+  "test_source_sha256": "3461c9001eb9acf14d3bff0e6ba918d428e29330b8db2f94c5c010907a34a1fc",
+  "scope": "Original patched launcher DEX translated for host Android-view execution; new helpers use the exact javac output fed to D8. Game/native GPU/network downloads are not exercised.",
+  "jvm_only_adjustment": "TrainerBridge.Endpoint class version 52 for its original default no-op method; Android bytecode unchanged"
+}

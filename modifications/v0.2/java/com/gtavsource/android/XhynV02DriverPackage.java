@@ -34,14 +34,14 @@ public final class XhynV02DriverPackage {
             }
         }
     }
-    public static void beforePrepare(File directory, String name, int api) {
+    public static void beforePrepare(File directory, String name, int api) throws IOException {
         try {
             File file = new File(directory, name);
             if (!file.getCanonicalFile().getParentFile().equals(directory.getCanonicalFile())) throw new IOException("Driver path is outside Drivers");
             validate(file, api, android.system.Os.sysconf(android.system.OsConstants._SC_PAGESIZE));
-        } catch (Exception failure) { throw new IllegalArgumentException("Vulkan driver package rejected: " + failure.getMessage(), failure); }
+        } catch (Exception failure) { throw new IOException("Vulkan driver package rejected: " + failure.getMessage(), failure); }
     }
-    public static void checkPrepare(File directory, String name, File ignored, int api) { beforePrepare(directory, name, api); }
+    public static void checkPrepare(File directory, String name, File ignored, int api) throws IOException { beforePrepare(directory, name, api); }
     private static byte[] read(ZipFile zip, ZipEntry entry, int limit) throws Exception {
         if (entry.getSize() > limit) throw new IOException("Driver ZIP entry is too large");
         try (InputStream in = zip.getInputStream(entry); ByteArrayOutputStream out = new ByteArrayOutputStream()) {

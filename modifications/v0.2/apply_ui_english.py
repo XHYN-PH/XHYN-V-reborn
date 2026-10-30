@@ -37,7 +37,15 @@ for base in D.glob('smali*'):
    counts[target]+=1
    return 'invoke-static'+('/range' if op.endswith('/range') else '')+' {'+regs+'}, '+hooks[target]
   s=re.sub(r'invoke-(\S+) \{([^}]+)\}, (\S+)',rewrite,s)
-  if 'Landroid/widget/ArrayAdapter;-><init>' in s:
+  if '.super Landroid/widget/ArrayAdapter;' in s:
+   # Preserve an anonymous subclass's actual superclass constructor. Changing
+   # invoke-direct(p0) to an unrelated final adapter causes a verifier failure.
+   def adapter_override(match):
+    block=match.group()
+    return re.sub(r'    return-object ([pv][0-9]+)',lambda ret:'    invoke-static/range {'+ret[1]+' .. '+ret[1]+'}, Lcom/gtavsource/android/XhynEnglishUi;->adapterView(Landroid/view/View;)Landroid/view/View;\n    move-result-object '+ret[1]+'\n'+ret.group(),block)
+   s=re.sub(r'^\.method public get(?:DropDown)?View\(.*?^\.end method',adapter_override,s,flags=re.M|re.S)
+   counts['translated adapter subclasses with superclass preserved']+=1
+  elif 'Landroid/widget/ArrayAdapter;-><init>' in s:
    s=s.replace(', Landroid/widget/ArrayAdapter;\n',', Lcom/gtavsource/android/XhynEnglishAdapter;\n').replace('Landroid/widget/ArrayAdapter;-><init>','Lcom/gtavsource/android/XhynEnglishAdapter;-><init>');counts['English array adapters']+=1
   if p.name=='TrainerBridge$CatalogItem.smali':
    marker='invoke-direct {p0}, Ljava/lang/Object;-><init>()V';assert s.count(marker)==1

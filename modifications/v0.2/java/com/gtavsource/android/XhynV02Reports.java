@@ -9,10 +9,16 @@ import java.util.zip.*;
 
 /** Explicit user export; no automatic network transmission. */
 public final class XhynV02Reports {
-    public static final String[] RUNTIME_LOGS = {"Config/driver-status.txt", "Config/dxvk-status.txt", "gtav_last_error.log", "gtav_error_pending.txt", "gtav_exit_info.log", "gtav_resource_errors.log", "error.log", "gtav.log", "crash.log"};
+    public static final String[] RUNTIME_LOGS = {"Config/driver-status.txt", "Config/dxvk-status.txt", "gtav_tty.log", "gtav_last_error.log", "gtav_error_pending.txt", "gtav_exit_info.log", "gtav_resource_errors.log", "error.log", "gtav.log", "crash.log"};
     public static String make(Context context) throws Exception {
         String id = context.getSharedPreferences("xhyn-v02", 0).getString("lastSession", "");
-        if (!id.matches("[A-Za-z0-9-]{1,100}")) throw new IOException("There is no session report yet. Launch the game once first.");
+        if (!id.matches("[A-Za-z0-9-]{1,100}")) {
+            File startup=new File(context.getFilesDir(),"xhyn-launch-error.json");
+            if(!startup.isFile())throw new IOException("There is no session or startup error report yet.");
+            File out=new File(context.getCacheDir(),"xhyn-last-session.zip");
+            try(ZipOutputStream zip=new ZipOutputStream(new FileOutputStream(out))){addText(zip,"README.txt","Startup failed before a game session was created. This report contains that setup failure.\n");add(zip,"startup-error.json",startup,65536);}
+            return out.getAbsolutePath();
+        }
         File session = new File(context.getFilesDir(), "xhyn-sessions/" + id);
         if (!session.isDirectory()) throw new IOException("That session report is no longer available");
         File out = new File(context.getCacheDir(), "xhyn-last-session.zip");
@@ -21,6 +27,8 @@ public final class XhynV02Reports {
             File[] files = session.listFiles(); if (files != null) for (File file : files) if (file.isFile()) add(zip, "session/" + file.getName(), file, 2 * 1024 * 1024);
             String error = XhynV02Runtime.lastError(context);
             addText(zip, "session/engine-error.txt", error);
+            File startup=new File(context.getFilesDir(),"xhyn-launch-error.json");
+            if(startup.isFile())add(zip,"separate-last-startup-error.json",startup,65536);
             File probe = XhynV02Runtime.probeFile(context); if (probe.isFile()) add(zip, "prior-driver-check.json", probe, 65536);
             // Existing runtime reports are included only if their timestamp belongs to this attempt.
             RuntimeConfig cfg = XhynV02Runtime.config();

@@ -1,16 +1,20 @@
 {
-  "release": "0.2",
+  "release": "0.2-hotfix1",
   "applicationId": "com.xhynph.xhynv.reborn174",
   "applicationLabel": "XHYN V",
-  "versionCode": 200,
+  "versionCode": 201,
   "input": {
-    "name": "GTAV-Master-1.7.26-仿PC修改器.apk",
+    "name": "GTAV-Master-1.7.26-\u4effPC\u4fee\u6539\u5668.apk",
     "sha256": "da730ee5b153cdf9a162d2dacd7bec45f0bf8a143f928a29d359c5c97ae51191",
     "engineSha256": "e8c6210a675c0741f7d46c77c0c41cf90698d94f1f954527f4cf856fb2dc16be",
     "minimumAndroidApi": 30,
     "targetAndroidApi": 36
   },
-  "excluded": [8, 10, 16],
+  "excluded": [
+    8,
+    10,
+    16
+  ],
   "selected": {
     "1": "Render resolution and scale",
     "2": "Graphics quality controls",
@@ -42,7 +46,7 @@
     "One UI Turnip workaround scoped to a compatible driver",
     "One coherent dxvk.conf editor/import/enable path with effective runtime verification",
     "Review other ports and report additional suggestions separately",
-    "About button beside System with Telegram https://t.me/xhynv, YouTube https://youtube.com/@xhyn_ph, and the XHYN V GitHub repository"
+    "About page inside System, directly below Game Resources with Telegram https://t.me/xhynv, YouTube https://youtube.com/@xhyn_ph, and the XHYN V GitHub repository"
   ],
   "scopeInterpretation": {
     "8": "No new generic profile rollback/restore UI; atomic writes and ordinary error recovery remain implementation safeguards.",
@@ -51,5 +55,9 @@
     "20": "Selected runtime script/API failure checks remain in scope without adding the excluded general game-file preflight.",
     "nativeRenderer": "This release targets the uploaded SDL3/DXVK base. The earlier SDL2 native-Vulkan/SDL3-compat experiment is not represented as a working bundled engine."
   },
-  "releaseRule": "Record implemented, partial, and unverified items separately. Do not claim device gameplay validation or universal GPU support from host checks."
+  "releaseRule": "Record implemented, partial, and unverified items separately. Do not claim device gameplay validation or universal GPU support from host checks.",
+  "hotfix": {
+    "navigation": "Existing System group and Diagnostics routes preserved; About is new page 21.",
+    "settings": "Display, Performance, Vulkan Drivers, DXVK and Diagnostics each receive only their relevant controls; existing driver import/selection is the single driver interface."
+  }
 }

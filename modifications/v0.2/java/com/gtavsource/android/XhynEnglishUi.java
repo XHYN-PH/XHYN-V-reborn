@@ -1,6 +1,7 @@
 package com.gtavsource.android;
 import android.app.*;import android.content.*;import android.view.*;import android.widget.*;import android.graphics.*;
 public final class XhynEnglishUi {
+ public static android.view.View adapterView(android.view.View view){if(view instanceof android.widget.TextView){android.widget.TextView text=(android.widget.TextView)view;text(text,text.getText());}return view;}
  static CharSequence cs(CharSequence s){if(s==null)return null;String t=XhynEnglish.t(s.toString());return t.equals(s.toString())?s:t;}
  static CharSequence[] array(CharSequence[] a){if(a==null)return null;CharSequence[] b=a.clone();for(int i=0;i<a.length;i++)b[i]=cs(a[i]);return b;}
  public static void text(TextView v,CharSequence s){v.setText(v instanceof EditText?s:cs(s));}
