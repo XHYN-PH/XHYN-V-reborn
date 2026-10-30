@@ -2,7 +2,7 @@
 
 Java interface/configuration helpers, a C reporting/probe helper, shaders,
 translations, guarded binary patches, the complete build driver and tests for
-version 0.2 Hotfix 1. See [scope](scope.json), [implementation status](STATUS.md) and
+version 0.2 Hotfix 2. See [scope](scope.json), [implementation status](STATUS.md) and
 [provenance](PROVENANCE.md). Original engine/launcher code is a separate input.
 
 The About page inside System, directly below Game Resources, uses the links in `XhynV02Menu.java`. The original
@@ -89,6 +89,33 @@ Reports keep config/package/runtime identities per attempt and exclude old
 append-only log content. Requested capture samples memory, thermal state and
 process I/O every two seconds, stops at its deadline, and retains eight attempts.
 Kernel process I/O counters are not engine streaming throughput.
+
+Hotfix 2 adds a 0–100% scale slider (0 restores recorded game dimensions, with a
+320 × 180 minimum for positive scales), targeted original-quality restoration,
+and a simpler record-next-game/report interface. Older releases did not record
+their original quality attributes. The editor and effective view share one active
+configuration; untouched generated fields remain managed when the editor saves.
+
+The DXVK page exposes supported tuning controls with information buttons,
+including distinct reported-memory and allocation-budget values. Specialized
+controls start collapsed. Each uses the same config writer as the editor, with
+explicit Off/Automatic values distinguished from Default (delete override).
+The editor refreshes control values after saving. Graphics, FPS, driver and
+diagnostic controls also explain purpose and tradeoffs. See
+[DXVK-TUNING.md](DXVK-TUNING.md) for all controls and semantic references.
+DX10.1 is an experimental feature-level cap, not a second rendering backend;
+it may prevent startup. The global FPS alias precedence is reflected in the UI,
+display requests and hints. Explicit file values clear conflicting HUD/async/cache
+environment aliases, while default values preserve the existing renderer policy.
+
+The optional native observer is installed only for requested recording or Android
+performance hints. It preserves the loader/BC dispatch and uses a guarded atomic
+entry branch with an ABI-tested trampoline. Tables and interval history are
+bounded. Presentation cadence is not rendered/GPU frame time; driver budgets are
+not process-owned memory. Android hints are off by default and require Android
+12+. Display requests reuse the existing FPS/output target. The app is shell
+profileable for developer CPU tools. See the [22-item implementation status](../../docs/issues/0.2-hotfix2-work-status.md)
+for remaining engine work and device qualification.
 
 The prepackage UI suite executes original patched launcher DEX through a JVM
 translation and the new helpers from the exact javac output used by D8. It tests

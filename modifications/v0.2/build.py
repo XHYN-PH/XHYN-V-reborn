@@ -129,24 +129,26 @@ def main():
         shutil.copyfile(path, target)
 
     classpath = str(classes) + os.pathsep + str(tools / 'json.jar')
-    run('compile-host-checks', [javac, '-encoding', 'UTF-8', '-cp', classpath, '-d', classes, PACKAGE / 'EnglishHostChecks.java', PACKAGE / 'tests/GraphicsHostChecks.java', PACKAGE / 'tests/DriverHostChecks.java', PACKAGE / 'tests/LogHostChecks.java'])
+    run('compile-host-checks', [javac, '-encoding', 'UTF-8', '-cp', classpath, '-d', classes, PACKAGE / 'EnglishHostChecks.java', PACKAGE / 'tests/GraphicsHostChecks.java', PACKAGE / 'tests/DriverHostChecks.java', PACKAGE / 'tests/LogHostChecks.java',PACKAGE/'tests/AdviceHostChecks.java'])
     host = run('english-host-checks', [java, '-cp', classpath, 'EnglishHostChecks', work])
     (reports / 'english-host-checks.txt').write_text(host)
     run('native-english-tests', [sys.executable, PACKAGE / 'test_native_english.py'])
     run('graphics-host-checks', [java, '-cp', classpath, 'GraphicsHostChecks', work / 'graphics-host-tests'])
     run('driver-host-checks', [java, '-cp', classpath + os.pathsep + str(tools / 'android.jar'), 'DriverHostChecks', work / 'driver-host-tests'])
     run('log-host-checks', [java, '-cp', classpath, 'LogHostChecks', work / 'log-host-tests'])
+    run('advice-host-checks',[java,'-cp',classpath,'AdviceHostChecks'])
     run('config-host-checks', [sys.executable, PACKAGE / 'tests/run_config_checks.py'])
     run('native-guard-tests', [sys.executable, PACKAGE / 'test_native_guards.py'])
+    run('native-observer-abi',[sys.executable,PACKAGE/'tests/test_observer_abi.py'])
     run('launcher-ui-checks',[sys.executable,PACKAGE/'tests/run_launcher_ui.py','--work-dir',work,'--tools-dir',tools,'--classpath-file',args.ui_classpath_file.resolve(strict=True),'--enjarify-root',args.enjarify_root.resolve(strict=True)])
     if args.verify_only:
         print('All prepackage checks passed; APK packaging and signing were not started.',flush=True)
         return
-    unsigned = work / 'XHYN-V-0.2-Hotfix1-unsigned.apk'
+    unsigned = work / 'XHYN-V-0.2-Hotfix2-unsigned.apk'
     run('package', [java, '-jar', apktool, 'b', work / 'decoded', '-p', work / 'framework', '-o', unsigned])
     final = unsigned
     if signing:
-        final = work / 'XHYN-V-0.2-Hotfix1.apk'
+        final = work / 'XHYN-V-0.2-Hotfix2.apk'
         run('sign', [java, '-jar', tools / 'apksigner.jar', 'sign', '--ks', args.keystore, '--ks-key-alias', args.key_alias, '--ks-pass', 'file:' + str(args.password_file), '--v4-signing-enabled', 'false', '--alignment-preserved', 'false', '--lib-page-alignment', '16384', '--out', final, unsigned])
         signature = run('signature-verification', [java, '-jar', tools / 'apksigner.jar', 'verify', '--verbose', '--print-certs', final])
         (reports / 'signature-verification.txt').write_text(signature)

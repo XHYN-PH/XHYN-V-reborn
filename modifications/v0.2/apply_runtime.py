@@ -89,6 +89,10 @@ _gtav=path('GTAVActivity').read_text()
 _signature=next(block.splitlines()[0].split()[-1] for block in _gtav.split('.method ')[1:] if 'const-string v0, "\\u6e38\\u620f\\u76ee\\u5f55\\u65e0\\u6548"' in block.split('.end method')[0])
 method('GTAVActivity',_signature,startup_title)
 after('GTAVActivity','onDestroy()V','invoke-static {}, Lcom/gtavsource/android/XhynV02Runtime;->gameStopped()V')
+after('GTAVActivity','onResume()V','invoke-static {p0}, Lcom/gtavsource/android/XhynV02Runtime;->resumeGame(Landroid/app/Activity;)V')
+after('GTAVActivity','onPause()V','invoke-static {p0}, Lcom/gtavsource/android/XhynV02Runtime;->pauseGame(Landroid/app/Activity;)V')
+for signature in ['surfaceCreated(Landroid/view/SurfaceHolder;)V','surfaceChanged(Landroid/view/SurfaceHolder;III)V']:
+    after('GTAVActivity$GameSurface',signature,'invoke-static {p0}, Lcom/gtavsource/android/XhynV02Runtime;->surface(Landroid/view/View;)V')
 method('FrameGenerationOverlay', 'attach(Landroid/app/Activity;)V', lambda s: s.replace('    .locals 4\n', '''    .locals 4
     invoke-static {}, Lcom/gtavsource/android/XhynV02Runtime;->config()Lcom/gtavsource/android/RuntimeConfig;
     move-result-object v0
@@ -187,11 +191,12 @@ for line in s.splitlines():
     lines.append(line)
 assert next(comments, None) is None
 ini.write_text('\n'.join(lines) + '\n')
-(D / 'apktool.yml').write_text(re.sub(r'versionName: .*', 'versionName: "0.2-hotfix1"', (D/'apktool.yml').read_text()).replace('versionCode: 200','versionCode: 201'))
+(D / 'apktool.yml').write_text(re.sub(r'versionName: .*', 'versionName: "0.2-hotfix2"', (D/'apktool.yml').read_text()).replace('versionCode: 200','versionCode: 202'))
 
 a = '{http://schemas.android.com/apk/res/android}'
 ET.register_namespace('android', a[1:-1])
 tree = ET.parse(D/'AndroidManifest.xml'); app = tree.getroot().find('application')
+if app.find('profileable') is None:ET.SubElement(app,'profileable',{a+'shell':'true'})
 for name, process in [('XhynV02ProbeActivity', ':xhyn_probe')]:
     attrs = {a+'name':'com.gtavsource.android.'+name, a+'exported':'false', a+'screenOrientation':'sensorLandscape', a+'theme':'@style/GameMenuTheme', a+'configChanges':'keyboardHidden|orientation|screenSize|smallestScreenSize|density'}
     if process: attrs[a+'process'] = process

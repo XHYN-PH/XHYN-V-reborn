@@ -28,7 +28,7 @@ static void check(bool value, const std::string& name) {
   std::cout << "PASS " << name << '\n';
 }
 int main(int argc, char** argv) {
-  if (argc != 4) return 2;
+  if (argc != 5) return 2;
   setenv("DXVK_CONFIG_FILE", argv[1], 1);
   setenv("DXVK_CONFIG", "", 1);
   auto config = dxvk::Config::getUserConfig();
@@ -59,5 +59,19 @@ int main(int argc, char** argv) {
   auto scoped = dxvk::Config::getUserConfig();
   check(scoped.getOption<int32_t>("dxvk.numCompilerThreads", -1) == 9, "Native executable section takes disclosed priority over global controls");
   check(scoped.getOption<int32_t>("dxvk.maxMemoryBudget", -1) == 2048, "Unrelated global memory value survives section matching");
+  setenv("DXVK_CONFIG_FILE", argv[4], 1);
+  auto tuning = dxvk::Config::getUserConfig();
+  check(tuning.getOption<std::string>("d3d11.maxFeatureLevel") == "10_1", "DX10.1 control writes a native-readable feature limit");
+  check(tuning.getOption<int32_t>("dxgi.maxDeviceMemory", -1) == 3072, "VRAM button value reaches the native parser in MiB");
+  check(tuning.getOption<int32_t>("dxgi.maxSharedMemory", -1) == 2048, "Shared-memory button value reaches native parser");
+  check(tuning.getOption<int32_t>("dxvk.maxMemoryBudget", -1) == 1536, "Actual allocation budget stays distinct from reported memory");
+  check(tuning.getOption<std::string>("d3d11.cachedDynamicResources") == "vi", "Resource-cache flags survive the UI config writer");
+  check(!tuning.getOption<bool>("dxvk.enableAsync", true), "Explicit async Off survives native boolean parsing");
+  check(tuning.getOption<dxvk::Tristate>("dxvk.useRawSsbo", dxvk::Tristate::False) == dxvk::Tristate::Auto, "Automatic raw storage buffers uses native tristate");
+  check(tuning.getOption<dxvk::Tristate>("dxvk.enableMemoryDefrag", dxvk::Tristate::False) == dxvk::Tristate::Auto, "Automatic defragmentation uses native tristate");
+  check(tuning.getOption<std::string>("dxvk.framePace") == "low-latency", "GPLALL pacing mode survives native string parsing");
+  check(tuning.getOption<bool>("d3d11.enableContextLock", false), "Context-lock compatibility control parsed");
+  check(tuning.getOption<bool>("d3d11.floatControls", false), "Float-control correctness option parsed");
+  check(tuning.getOption<std::string>("dxvk.hud", "missing").empty(), "HUD Off remains an intentional empty string");
   std::cout << "TOTAL " << checks << " upstream parser checks; host only\n";
 }

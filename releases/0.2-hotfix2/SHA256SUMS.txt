@@ -1,0 +1,3 @@
+e2f1862b6deaade281be2b0f5f9c7dbf604462c7dccf2b9b951977327b3518f8  XHYN-V-0.2-Hotfix2.apk
+d42b3086f51bb099bad7f7a1bc9fcb3ca7d739aaac688f9c8c7a54eff6c3e657  XHYN-V-0.2-Hotfix2-Public-Source.zip
+474e506056b4388c65e854617ae53e512c1812a967021d359c3afd354cf774a9  XHYN-V-0.2-Hotfix2-verification.md

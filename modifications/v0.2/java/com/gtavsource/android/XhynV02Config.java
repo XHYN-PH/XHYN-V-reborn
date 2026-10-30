@@ -25,7 +25,10 @@ public final class XhynV02Config {
             "d3d11.relaxedBarriers", "d3d11.relaxedGraphicsBarriers",
             "d3d11.forceVolatileTgsmAccess", "d3d11.forceComputeUavBarriers",
             "d3d11.disableDirectImageMapping", "dxvk.zeroMappedMemory",
-            "dxvk.gtaAsyncInterop", "dxvk.gtaDescriptorCache", "dxvk.gtaDescriptorCacheStats"));
+            "dxvk.gtaAsyncInterop", "dxvk.gtaDescriptorCache", "dxvk.gtaDescriptorCacheStats",
+            "dxvk.gplAsyncCache","dxvk.enableDescriptorUpdateTemplates","dxvk.lowLatencyAllowCpuFramesOverlap",
+            "d3d11.clampNegativeLodBias","d3d11.forceSampleRateShading","d3d11.enableContextLock",
+            "d3d11.zeroInitWorkgroupMemory","d3d11.invariantPosition","d3d11.floatControls"));
     private static final Set<String> TRISTATES = new HashSet<>(Arrays.asList(
             "dxvk.enableGraphicsPipelineLibrary", "dxvk.enableMemoryDefrag",
             "dxvk.trackPipelineLifetime", "dxvk.tilerMode", "dxvk.useRawSsbo"));
@@ -34,12 +37,15 @@ public final class XhynV02Config {
         Map<String, int[]> ranges = new LinkedHashMap<>();
         ranges.put("dxvk.numCompilerThreads", new int[]{0, 16});
         ranges.put("dxvk.numShaderCompilerThreads", new int[]{0, 16});
-        ranges.put("dxgi.maxFrameRate", new int[]{0, 1000});
+        ranges.put("dxgi.maxFrameRate", new int[]{-1, 1000});
+        ranges.put("dxvk.maxFrameRate", new int[]{-1,1000});
         ranges.put("dxgi.maxFrameLatency", new int[]{0, 8});
         ranges.put("dxgi.syncInterval", new int[]{0, 4});
         ranges.put("dxgi.maxDeviceMemory", new int[]{0, 65536});
         ranges.put("dxgi.maxSharedMemory", new int[]{0, 65536});
         ranges.put("dxvk.maxMemoryBudget", new int[]{0, 65536});
+        ranges.put("d3d11.samplerAnisotropy",new int[]{-1,16});
+        ranges.put("d3d11.maxTessFactor",new int[]{0,64});
         RANGES = Collections.unmodifiableMap(ranges);
     }
 
@@ -103,6 +109,11 @@ public final class XhynV02Config {
                             catch (NumberFormatException error) { throw new IOException("Texture LOD bias needs a number"); }
                             if (Float.isNaN(number) || Float.isInfinite(number) || number < -2 || number > 1) problem = "Texture LOD bias must be -2..1";
                         }
+                        if(name.equals("d3d11.maxTessFactor")){
+                            int number=Integer.parseInt(value);if(number>0&&number<8)problem="Tessellation limit must be 0 (game setting), or 8..64";
+                        }
+                        if(name.equals("d3d11.maxFeatureLevel")&&!Arrays.asList("9_1","9_2","9_3","10_0","10_1","11_0","11_1","12_0","12_1").contains(value))problem="Use a Direct3D feature level such as 11_0 or 10_1";
+                        if(name.equals("d3d11.cachedDynamicResources")&&!value.matches("[cvira]*"))problem="Cached dynamic resources accepts only c, v, i, r, a flags or an empty string";
                         if (name.equals("dxvk.hud") && (value.equalsIgnoreCase("True") || value.equalsIgnoreCase("False"))) problem = "HUD needs tokens such as fps,frametimes, or an empty quoted string";
                     }
                 }
@@ -142,16 +153,24 @@ public final class XhynV02Config {
             if (inserted || !name.equals(key(line))) out.append(line).append('\n');
         }
         if (!inserted && value != null) out.append(name).append(" = \"").append(value).append("\"\n");
-        String result = out.toString();
+        String result = out.toString().replaceAll("\\n+\\z","\n");
         validate(result);
         return result;
     }
 
     /** Saved overrides come after managed defaults, with native last-entry precedence. */
     public static String effective(Map<String, String> defaults, String saved, boolean enabled) throws IOException {
-        StringBuilder out = new StringBuilder("# XHYN V 0.2 effective DXVK configuration\n");
-        for (Map.Entry<String, String> entry : defaults.entrySet()) out.append(entry.getKey()).append(" = ").append(entry.getValue()).append('\n');
-        if (enabled && !saved.trim().isEmpty()) out.append('\n').append(normalize(saved)).append('\n');
+        String header="# XHYN V 0.2 effective DXVK configuration\n";
+        String source=enabled?normalize(saved):"";
+        // The editor displays this same complete text. Saving/reopening must be
+        // idempotent, with comments/sections retained and no repeated defaults.
+        if(source.startsWith(header))source=source.substring(header.length());
+        source=source.replaceAll("\\A\\n+|\\n+\\z", "");
+        Map<String,String> explicit=globals(source);
+        StringBuilder out = new StringBuilder(header);
+        for (Map.Entry<String, String> entry : defaults.entrySet()) if(!explicit.containsKey(entry.getKey()))
+            out.append(entry.getKey()).append(" = ").append(entry.getValue()).append('\n');
+        if (!source.isEmpty()) out.append(source).append('\n');
         String result = out.toString();
         validate(result);
         return result;
@@ -164,6 +183,17 @@ public final class XhynV02Config {
             if (name != null && !supported.contains(name) && !names.contains(name)) names.add(name);
         }
         return names;
+    }
+
+    /** Keep untouched generated fields managed after editing the complete view.
+     * Otherwise saving the editor would freeze FPS/compiler defaults and later
+     * defeat the launcher's frame-generation and managed controls. */
+    public static String editedOverrides(String active,String edited,String previous,Set<String> managed)throws IOException {
+        Map<String,String> before=globals(active),after=globals(edited),explicit;
+        try{explicit=globals(previous);}catch(IOException oldInvalid){explicit=Collections.emptyMap();}
+        String output=normalize(edited);
+        for(String key:managed)if(!explicit.containsKey(key)&&before.containsKey(key)&&before.get(key).equals(after.get(key)))output=setGlobal(output,key,null);
+        return output;
     }
 
     public static String read(File file) throws IOException {

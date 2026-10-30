@@ -1,0 +1,1 @@
+PASS 69 native-component host checks; Vulkan forwarding/accounting/lifecycle mocks and real controlled exit/report I/O; no GPU rendering test

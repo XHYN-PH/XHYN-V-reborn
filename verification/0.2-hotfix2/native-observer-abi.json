@@ -1,0 +1,5 @@
+{
+  "result": "PASS",
+  "checks": 26,
+  "scope": "Exact loader displaced prologue and absolute-jump ABI at two ASLR bases; original return/arguments/callee-saved registers/stack preserved. Emulation, not Android execution."
+}

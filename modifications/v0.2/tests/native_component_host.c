@@ -56,6 +56,7 @@ void *test_dlsym(void *handle,const char *name){(void)handle;if(!strcmp(name,"SD
 int test_dlclose(void *handle){(void)handle;closed++;return 0;}
 int test_dladdr(const void *address,Dl_info *out){memset(out,0,sizeof(*out));if(address==engine){out->dli_fbase=engine;return 1;}return 0;}
 
+#include "native_observer_host.h"
 int main(int argc,char **argv){assert(argc==2);int checks=0;
  for(mode=0;mode<=7;mode++){
   closed=destroyed_instance=destroyed_surface=destroyed_device=released_window=created_device=0;
@@ -73,12 +74,14 @@ int main(int argc,char **argv){assert(argc==2);int checks=0;
  assert(!Java_com_gtavsource_android_XhynV02Native_install(&environment,NULL,(jstring)argv[1],(jstring)"host-session"));checks++;
  memcpy(engine+0x2a3c784,expected,16);
  assert(Java_com_gtavsource_android_XhynV02Native_install(&environment,NULL,(jstring)argv[1],(jstring)"host-session"));checks++;
- assert(*(uint32_t *)(engine+0x2a3c784)==0x58000050u);assert(*(uintptr_t *)(engine+0x2a3c78c)==(uintptr_t)controlled_stop);checks+=2;
+ uintptr_t stored_destination;memcpy(&stored_destination,engine+0x2a3c78c,sizeof(stored_destination));
+ assert(*(uint32_t *)(engine+0x2a3c784)==0x58000050u);assert(stored_destination==(uintptr_t)controlled_stop);checks+=2;
  assert(Java_com_gtavsource_android_XhynV02Native_install(&environment,NULL,(jstring)argv[1],(jstring)"host-session"));checks++;
  pid_t child=fork();assert(child>=0);if(!child)controlled_stop(0x8392273d);int status;waitpid(child,&status,0);assert(WIFEXITED(status)&&WEXITSTATUS(status)==73);checks++;
  char file[PATH_MAX],text[16384];snprintf(file,sizeof(file),"%s/xhyn-native-error.txt",argv[1]);FILE *f=fopen(file,"rb");assert(f);size_t n=fread(text,1,sizeof(text)-1,f);text[n]=0;fclose(f);
  assert(strstr(text,"session=host-session\n")&&strstr(text,"error_code=0x8392273d\n")&&strstr(text,"Invalid resource mapping")&&strstr(text,"frame=0"));checks++;
  snprintf(file,sizeof(file),"%s/xhyn-native-error.part",argv[1]);assert(access(file,F_OK));checks++;
- printf("PASS %d native-component host checks; mocked Vulkan failure paths, real controlled exit/report I/O; no GPU rendering test\n",checks);
+ checks+=observer_checks(argv[1]);
+ printf("PASS %d native-component host checks; Vulkan forwarding/accounting/lifecycle mocks and real controlled exit/report I/O; no GPU rendering test\n",checks);
  return 0;
 }

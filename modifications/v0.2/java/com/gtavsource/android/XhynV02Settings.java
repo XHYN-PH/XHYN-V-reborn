@@ -20,7 +20,12 @@ public final class XhynV02Settings {
     private LinearLayout body;
     private TextView probeStatus;
     private int page;
+    private final java.util.List<View> advanced=new ArrayList<>();
+    private boolean showAdvanced;
+    private boolean showDxvkAdvanced;
     private boolean disposed;
+    private Map<String,String> dxvkValues=Collections.emptyMap(),dxvkExplicit=Collections.emptyMap();
+    private Set<String> dxvkSupported=Collections.emptySet();
     private static final int IMPORT_CONFIG=502, EXPORT_REPORT=503, PROBE=505;
     private String exportReport;
     private final java.util.concurrent.ExecutorService io=Executors.newSingleThreadExecutor();
@@ -43,7 +48,10 @@ public final class XhynV02Settings {
         value.cfg=RuntimeConfig.load(value.cfg.root);activity.config=value.cfg;
         activity.getSharedPreferences("xhyn-v02",0).edit().putString("gameRoot",value.cfg.root.getPath()).apply();
         value.body=MenuStyle.column(activity);value.body.setTag("xhyn-page-"+page);
-        activity.content.addView(value.body);value.draw();
+        value.advanced.clear();value.showAdvanced=false;
+        if(page==DIAGNOSTICS){for(int n=0;n<activity.content.getChildCount();n++){View child=activity.content.getChildAt(n);if(child.getVisibility()==View.VISIBLE){value.advanced.add(child);child.setVisibility(View.GONE);}}activity.content.addView(value.body,0);}
+        else activity.content.addView(value.body);
+        value.draw();
     }
     public static void release(GameMenuActivity activity) {
         XhynV02Settings value=(XhynV02Settings)activity.xhynSettings;
@@ -56,7 +64,7 @@ public final class XhynV02Settings {
     }
     public static void resume(GameMenuActivity activity) {
         XhynV02Settings value=(XhynV02Settings)activity.xhynSettings;
-        if(value!=null && !value.disposed){value.cfg=RuntimeConfig.load(value.cfg.root);value.updateProbe();}
+        if(value!=null && !value.disposed){value.cfg=RuntimeConfig.load(value.cfg.root);if(value.page==DXVK||value.page==PERFORMANCE)value.draw();else value.updateProbe();}
     }
     private boolean isFinishing(){return disposed||activity.isFinishing()||activity.isDestroyed();}
     private void runOnUiThread(Runnable action){activity.runOnUiThread(()->{if(!isFinishing())action.run();});}
@@ -68,6 +76,7 @@ public final class XhynV02Settings {
     private void section(String value){body.addView(MenuStyle.heading(activity,value));}
     private void button(String title,Runnable action){
         LinearLayout row=MenuStyle.detailRow(body,title,"");
+        settingHelp(row,title,title);
         row.addView(MenuStyle.icon(activity,android.R.drawable.ic_menu_more,title,action));
         row.setOnClickListener(v->action.run());
     }
@@ -85,15 +94,18 @@ public final class XhynV02Settings {
         if(!before.isEmpty())XhynV02Config.write(file,XhynV02Config.setGlobal(before,key,null));
     }
     private void toggle(String title,String section,String key,boolean fallback,Runnable changed){
-        MenuStyle.toggle(body,title,"",cfg.getBoolean(section,key,fallback),on->{
-            try{put(section,key,Boolean.toString(on));if(changed!=null)changed.run();}catch(Exception e){error(e);}
+        Switch control=MenuStyle.toggle(body,title,"",cfg.getBoolean(section,key,fallback),on->{
+            try{put(section,key,Boolean.toString(on));if(changed!=null)changed.run();if(key.equals("dxvk_conf_enabled"))draw();}catch(Exception e){error(e);}
         });
+        if(control.getParent() instanceof LinearLayout)settingHelp((LinearLayout)control.getParent(),title,key);
     }
+    private void settingHelp(LinearLayout row,String title,String key){String help=XhynV02SettingHelp.get(key);if(help!=null)row.addView(MenuStyle.icon(activity,android.R.drawable.ic_menu_info_details,"About "+title,()->info(title,help)));}
+    private String controlValue(String section,String key,String fallback,String dxvkKey){return dxvkKey!=null&&dxvkValues.containsKey(dxvkKey)?dxvkValues.get(dxvkKey):option(section,key,fallback);}
     private void choice(String title,String[] labels,String[] values,String section,String key,String fallback,String dxvkKey){
-        int selected=Math.max(0,Arrays.asList(values).indexOf(option(section,key,fallback)));
-        LinearLayout row=MenuStyle.detailRow(body,title,labels[selected]);row.setTag("xhyn-setting-"+key);
-        Runnable choose=()->new MenuDialogBuilder(activity).setTitle(title)
-            .setSingleChoiceItems(labels,Math.max(0,Arrays.asList(values).indexOf(option(section,key,fallback))),(dialog,index)->{
+        String current=controlValue(section,key,fallback,dxvkKey);int selected=Arrays.asList(values).indexOf(current);
+        LinearLayout row=MenuStyle.detailRow(body,title,selected>=0?labels[selected]:current+" (custom)");row.setTag("xhyn-setting-"+key);
+        Runnable choose=()->{AlertDialog.Builder builder=new MenuDialogBuilder(activity).setTitle(title)
+            .setSingleChoiceItems(labels,Arrays.asList(values).indexOf(controlValue(section,key,fallback,dxvkKey)),(dialog,index)->{
                 try{
                     if(dxvkKey!=null)removeOverride(dxvkKey);
                     if(key.equals("compiler_workers"))removeOverride("dxvk.numShaderCompilerThreads");
@@ -101,14 +113,21 @@ public final class XhynV02Settings {
                     View column=row.getChildAt(0);
                     if(column instanceof ViewGroup && ((ViewGroup)column).getChildCount()>1 && ((ViewGroup)column).getChildAt(1) instanceof TextView)
                         ((TextView)((ViewGroup)column).getChildAt(1)).setText(labels[index]);
-                    row.setContentDescription(title+": "+labels[index]);dialog.dismiss();
+                    row.setContentDescription(title+": "+labels[index]);dialog.dismiss();if(dxvkKey!=null)draw();
                 }catch(Exception e){error(e);}
-            }).setNegativeButton("Cancel",null).show();
-        row.addView(MenuStyle.icon(activity,android.R.drawable.ic_menu_more,"Change "+title,choose));row.setOnClickListener(v->choose.run());
+            }).setNegativeButton("Cancel",null);
+            if(section.equals("xhyn_graphics"))builder.setNeutralButton("Restore default",(d,w)->restoreGraphics(java.util.Collections.singletonList(key)));
+            builder.show();};
+        settingHelp(row,title,key);row.addView(MenuStyle.icon(activity,android.R.drawable.ic_menu_more,"Change "+title,choose));row.setOnClickListener(v->choose.run());
     }
     private void draw(){
         if(body==null || isFinishing())return;
         body.removeAllViews();probeStatus=null;
+        if(page==DXVK||page==PERFORMANCE)try{
+            cfg=RuntimeConfig.load(cfg.root);activity.config=cfg;
+            dxvkValues=XhynV02Config.globals(XhynV02Runtime.preview(activity,cfg));dxvkSupported=XhynV02Runtime.supported(activity,cfg);
+            try{dxvkExplicit=cfg.getBoolean("xhyn","dxvk_conf_enabled",true)?XhynV02Config.globals(XhynV02Config.read(XhynV02Runtime.saved(cfg))):Collections.emptyMap();}catch(IOException invalidSaved){dxvkExplicit=Collections.emptyMap();}
+        }catch(Exception failure){dxvkValues=Collections.emptyMap();dxvkExplicit=Collections.emptyMap();dxvkSupported=Collections.emptySet();text("Could not read DXVK settings: "+failure.getMessage(),13);}
         switch(page){
             case DISPLAY:graphics();break;
             case PERFORMANCE:performance();break;
@@ -124,8 +143,12 @@ public final class XhynV02Settings {
         new MenuDialogBuilder(activity).setTitle(title).setView(scroll).setPositiveButton("Close",null).show();
     }
     private void graphics(){
+        if(!GTAVActivity.isGameRunning())try{XhynV02Graphics.rememberQuality(new File(cfg.root,"save"));}catch(Exception failure){android.util.Log.w("XHYN V","Could not record original quality values",failure);}
         section("Rendering and memory");
         button("Resolution / render scale", this::resolution);
+        button("Restore graphics quality defaults",()->new MenuDialogBuilder(activity).setTitle("Restore graphics quality defaults?")
+            .setMessage("Restores quality values recorded before changes in this update. Resolution, controls and game saves are kept. Older releases did not record their original values.")
+            .setPositiveButton("Restore defaults",(d,w)->restoreGraphics(XhynV02Graphics.qualityKeys())).setNegativeButton("Cancel",null).show());
         button("Use lower graphics settings", () -> new MenuDialogBuilder(activity).setTitle("Use lower graphics settings?").setMessage("Sets textures, shadows, reflections, grass, water, particles and post effects to Normal, and disables MSAA, SSAO and long shadows. No FPS increase is guaranteed. You can change each setting below.").setPositiveButton("Apply", (d,w) -> {
             try { for (String key : XhynV02Graphics.QUALITY) put("xhyn_graphics", key, "0"); put("xhyn_graphics", "Shadow_ParticleShadows", "false"); put("xhyn_graphics", "Shadow_LongShadows", "false"); put("xhyn_graphics", "Shadow_SoftShadows", "0"); toast("Lower settings saved for next launch"); } catch (Exception e) { error(e); }
         }).setNegativeButton("Cancel", null).show());
@@ -137,27 +160,72 @@ public final class XhynV02Settings {
         choice("Population density", new String[]{"Keep game setting", "25%", "50%", "75%", "100%"}, new String[]{"", "0.25", "0.5", "0.75", "1.0"}, "xhyn_graphics", "CityDensity", "", null);
         for (String key : new String[]{"PedVarietyMultiplier", "VehicleVarietyMultiplier"}) choice(readable(key), new String[]{"Keep game setting", "25%", "50%", "100%"}, new String[]{"", "0.25", "0.5", "1.0"}, "xhyn_graphics", key, "", null);
         for (String key : new String[]{"LodScale", "PedLodBias", "VehicleLodBias"}) choice(readable(key), new String[]{"Keep game setting", "Low (0)", "Medium (0.5)", "High (1)"}, new String[]{"", "0", "0.5", "1.0"}, "xhyn_graphics", key, "", null);
-        toggle("Reduce texture detail at a distance (LOD bias +1)", "xhyn", "texture_lod", false, () -> { try { removeOverride("d3d11.samplerLodBias"); } catch (Exception e) { error(e); } });
-        text("Lower texture quality and resolution reduce memory demand. Artificial memory caps are available in dxvk.conf for advanced use; overly small limits can cause stalls or missing textures.", 13);
+        text("Lower texture quality and resolution reduce memory demand. Texture LOD bias and renderer memory settings are available under DXVK tuning.", 13);
     }
     private void performance(){
         section("Frame rate and shader compilation");
         boolean generated=StableFrameProfile.framegen(cfg);
-        button(generated ? "Rendered FPS: " + StableFrameProfile.base(cfg) + " · set by frame generation" : "Rendered FPS cap: " + XhynV02Runtime.frameLimit(cfg), generated ? () -> info("Frame generation", "Change the rendered and output targets on the launcher's frame-generation page, or turn frame generation off to choose a separate rendered FPS cap.") : this::fps);
+        String cap=dxvkValues.containsKey("dxvk.maxFrameRate")?dxvkValues.get("dxvk.maxFrameRate"):dxvkValues.getOrDefault("dxgi.maxFrameRate",Integer.toString(XhynV02Runtime.frameLimit(cfg)));
+        String capLabel=cap.equals("-1")?"Game / renderer default":cap.equals("0")?"Unlimited":cap;
+        button("Rendered FPS cap: "+capLabel+(generated?" · frame generation active":""), generated ? () -> info("Frame generation", "Change the rendered and output targets on the frame-generation page. Explicit dxvk.conf values can override the DXVK cap. The current global cap is "+capLabel+".") : this::fps);
         choice("VSync", new String[]{"Off", "On"}, new String[]{"0", "1"}, "xhyn", "vsync", "0", "dxgi.syncInterval");
         choice("Maximum frame latency", new String[]{"1 frame", "2 frames", "3 frames"}, new String[]{"1", "2", "3"}, "xhyn", "latency", XhynV02Runtime.defaultLatency(cfg), "dxgi.maxFrameLatency");
+        toggle("Match display refresh to the FPS target", "xhyn", "match_refresh", true, null);
+        toggle("Android performance hints (experimental)", "xhyn", "performance_hints", false, null);
+        text("Display matching requests a suitable screen refresh rate. Performance hints help Android schedule the presentation thread on supported Android 12+ devices. Both use the existing FPS target; device testing is still needed.",13);
     }
     private void dxvk(){
-        choice("Shader compiler workers", new String[]{"Automatic", "1", "2", "3", "4", "6", "8"}, new String[]{"0", "1", "2", "3", "4", "6", "8"}, "xhyn", "compiler_workers", "0", "dxvk.numCompilerThreads");
-        toggle("Async shader compilation (supported DXVK builds only)", "xhyn", "async", false, () -> { try { removeOverride("dxvk.enableAsync"); } catch (Exception e) { error(e); } });
-        text("Async is ignored when the selected renderer does not implement it. More compiler workers can increase memory use and heat. Generated frames are separate from rendered FPS; frame generation remains in its own launcher page and starts disabled on fresh installs.", 13);
+        section("DXVK tuning");
+        text("These controls read and edit the same active configuration as the text editor. Options follow the selected bundled renderer. Restart the game after changing them.",13);
+        String group="";
+        String renderer="custom";try{renderer=XhynV02Runtime.rendererId(activity,cfg);}catch(Exception unavailable){}
+        List<XhynV02DxvkOptions.Option> options=XhynV02DxvkOptions.supported(dxvkSupported,renderer);
+        for(XhynV02DxvkOptions.Option option:options)if(!option.advanced()){
+            if(!group.equals(option.group)){group=option.group;section(group);}dxvkOption(option);
+        }
+        boolean hasAdvanced=false;for(XhynV02DxvkOptions.Option option:options)if(option.advanced())hasAdvanced=true;
+        if(hasAdvanced){button(showDxvkAdvanced?"Hide advanced DXVK options":"Show advanced DXVK options",()->{showDxvkAdvanced=!showDxvkAdvanced;draw();});
+            if(showDxvkAdvanced){group="";for(XhynV02DxvkOptions.Option option:options)if(option.advanced()){if(!group.equals(option.group)){group=option.group;section(group);}dxvkOption(option);}}}
+        if(dxvkSupported.isEmpty())text("Option support is unknown for this renderer. Use the editor with that renderer's documentation; tuning buttons are shown for recognized bundled builds.",13);
+        else button("Reset DXVK tuning overrides",()->new MenuDialogBuilder(activity).setTitle("Reset DXVK tuning overrides?")
+            .setMessage("Removes custom global values for the tuning controls. Comments, per-application sections and settings on the Performance page are kept. Per-application sections can still override the defaults.")
+            .setPositiveButton("Reset overrides",(d,w)->{try{String source=XhynV02Config.read(XhynV02Runtime.saved(cfg));for(XhynV02DxvkOptions.Option option:XhynV02DxvkOptions.OPTIONS)source=XhynV02Config.setGlobal(source,option.key,null);saveConfig(source);}catch(Exception failure){error(failure);}}).setNegativeButton("Cancel",null).show());
         section("dxvk.conf");
         toggle("Enable saved dxvk.conf overrides", "xhyn", "dxvk_conf_enabled", true, null);
         button("Edit dxvk.conf", this::editor);
         button("Import dxvk.conf", () -> startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*").addCategory(Intent.CATEGORY_OPENABLE), IMPORT_CONFIG));
-        button("View effective configuration", () -> { try { showText("Effective dxvk.conf", XhynV02Runtime.preview(activity, XhynV02Runtime.config())); } catch (Exception e) { error(e); } });
-        text("Saved overrides take priority. Changing a managed control removes its matching global override. Executable sections remain active and can still override controls. Turning the file off keeps your edits.", 13);
+        button("View effective configuration", () -> { try { showText("Effective dxvk.conf", XhynV02Runtime.preview(activity, RuntimeConfig.load(cfg.root))); } catch (Exception e) { error(e); } });
+        text("Edit and View show the same active configuration for the next launch. Saving edits enables them. Changing a managed control removes its matching global override. Executable sections can override global controls. Turning the file off keeps your saved text.", 13);
         button("Clear XHYN shader caches", () -> new MenuDialogBuilder(activity).setTitle("Clear shader caches?").setMessage("The game must be closed. Shaders will compile again on your next launch; this can temporarily increase stutter.").setPositiveButton("Clear", (d,w) -> { try { XhynV02Runtime.clearCaches(activity); toast("Shader caches cleared"); } catch (Exception e) { error(e); } }).setNegativeButton("Cancel", null).show());
+    }
+    private void dxvkOption(XhynV02DxvkOptions.Option option){
+        String current=dxvkValues.get(option.key);
+        String suffix=current!=null&&!dxvkExplicit.containsKey(option.key)?" · default":"";
+        LinearLayout row=MenuStyle.detailRow(body,option.title,option.display(current)+suffix);row.setTag("xhyn-dxvk-"+option.key);
+        Runnable change=()->{
+            MenuDialogBuilder builder=new MenuDialogBuilder(activity);
+            String[] labels=new String[option.labels.length+1];labels[0]="Default";System.arraycopy(option.labels,0,labels,1,option.labels.length);
+            String selectedValue=dxvkValues.get(option.key);int index=option.index(selectedValue);int selected=!dxvkExplicit.containsKey(option.key)?0:index<0?-1:index+1;
+            builder.setTitle(option.title).setSingleChoiceItems(labels,selected,(dialog,item)->{
+                try{writeDxvkOption(option,item==0?null:option.values[item-1]);dialog.dismiss();}catch(Exception failure){error(failure);}
+            }).setNegativeButton("Cancel",null);
+            if(option.memory)builder.setPositiveButton("Custom value",(dialog,which)->memoryValue(option));
+            builder.show();
+        };
+        row.addView(MenuStyle.icon(activity,android.R.drawable.ic_menu_info_details,"About "+option.title,()->info(option.title,option.information())));
+        row.addView(MenuStyle.icon(activity,android.R.drawable.ic_menu_edit,"Change "+option.title,change));row.setOnClickListener(v->change.run());
+    }
+    private void memoryValue(XhynV02DxvkOptions.Option option){
+        LinearLayout panel=MenuStyle.column(activity);EditText input=number(panel,"MiB (0 = automatic; maximum 65536)",dxvkValues.getOrDefault(option.key,"0"));input.setTag("xhyn-dxvk-number");
+        panel.addView(MenuStyle.text(activity,option.help,13,0xffb3b5b9));
+        AlertDialog dialog=new MenuDialogBuilder(activity).setTitle(option.title).setView(panel).setPositiveButton("Save",null).setNegativeButton("Cancel",null).create();
+        dialog.setOnShowListener(d->dialog.getButton(-1).setOnClickListener(v->{try{int value=Integer.parseInt(input.getText().toString());if(value<0||value>65536)throw new IOException("Choose a value from 0 to 65536 MiB");writeDxvkOption(option,Integer.toString(value));dialog.dismiss();}catch(Exception failure){input.setError(failure.getMessage()==null?"Enter a whole number from 0 to 65536":failure.getMessage());}}));dialog.show();
+    }
+    private void writeDxvkOption(XhynV02DxvkOptions.Option option,String value)throws Exception{
+        cfg=RuntimeConfig.load(cfg.root);activity.config=cfg;
+        if(value!=null&&!XhynV02Runtime.supported(activity,cfg).contains(option.key))throw new IOException("This option is not advertised by the selected renderer");
+        String source=XhynV02Config.read(XhynV02Runtime.saved(cfg));
+        saveConfig(XhynV02Config.setGlobal(source,option.key,value));
     }
     private void drivers(){
         section("Vulkan drivers");
@@ -169,42 +237,81 @@ public final class XhynV02Settings {
         text("Turnip controls apply only after the selected package was identified as Qualcomm Turnip. They do not apply to Qualcomm's stock driver, PanVK or Samsung Vulkan. Restart after changing a driver or these controls.", 13);
     }
     private void diagnostics(){
-        choice("Capture duration", new String[]{"30 seconds", "2 minutes", "5 minutes", "20 minutes"}, new String[]{"30", "120", "300", "1200"}, "xhyn", "capture_seconds", "30", null);
-        toggle("Capture the next game attempt", "performance", "capture", false, null);
-        text("Capture stops at the chosen deadline. Normal play adds no periodic memory sampler. Reports keep the last eight attempts and label each driver, binary and configuration separately.", 13);
-        button("Last engine error / device loss", () -> showText("Last engine error", XhynV02Runtime.lastError(activity)));
-        button("Startup and settings notices", () -> showText("Startup report", XhynV02Runtime.startupError(activity)));
-        button("Export most recent session report", this::export);
-        text("A missing script native indicates a game/script compatibility problem. Changing graphics drivers cannot repair an unknown native API. Reports include the most recent session and any available current error text.", 13);
+        section("Help with a crash or slow game");
+        text("1. Turn on Record next game.\n2. Start the game and reproduce the problem.\n3. Return here and save the report to share with support.",14);
+        toggle("Record next game", "performance", "capture", false, ()->put("xhyn","capture_seconds","1200"));
+        text("Recording stops automatically after 20 minutes or when you close the game. It is off during normal play. Reports stay on your device until you choose to share them.",13);
+        button("What happened last time?", () -> showText("Last game attempt", XhynV02Runtime.userSummary(activity)));
+        button("Save report to share", this::export);
+        button("View technical details", () -> showText("Technical details", XhynV02Runtime.lastError(activity)+"\n\n"+XhynV02Runtime.startupError(activity)));
+        button(showAdvanced?"Hide advanced diagnostics":"Show advanced diagnostics",()->{showAdvanced=!showAdvanced;for(View view:advanced)if(view.getParent()==activity.content)view.setVisibility(showAdvanced?View.VISIBLE:View.GONE);draw();});
+    }
+    private boolean restoreGraphics(java.util.Collection<String> keys){
+        if(GTAVActivity.isGameRunning()){info("Close the game first","Close the game before restoring graphics defaults.");return false;}
+        try{
+            int restored=XhynV02Graphics.restore(new File(cfg.root,"save"),keys);
+            RuntimeConfig live=RuntimeConfig.load(cfg.root);
+            for(String key:keys){live.put("xhyn_graphics",key.toLowerCase(Locale.ROOT),"");}
+            live.save();cfg=live;activity.config=live;draw();
+            if(restored>0)toast("Saved graphics defaults restored");
+            else info("Quality overrides cleared","No original values were recorded for these fields. Your current game values have been kept. New changes will record the original values before applying them.");
+            return true;
+        }catch(Exception failure){error(failure);return false;}
     }
     private void resolution() {
         LinearLayout panel = new LinearLayout(activity); panel.setOrientation(LinearLayout.VERTICAL);
-        EditText width = number(panel, "Width (320..7680)", option("xhyn_graphics", "ScreenWidth", "1280"));
-        EditText height = number(panel, "Height (180..4320)", option("xhyn_graphics", "ScreenHeight", "720"));
-        EditText scale = number(panel, "Render scale % (10..100)", "100");
-        AlertDialog dialog = new MenuDialogBuilder(activity).setTitle("Render resolution").setView(panel).setPositiveButton("Save", null).setNegativeButton("Cancel", null).setNeutralButton("Keep game setting", (d,w) -> { put("xhyn_graphics", "ScreenWidth", ""); put("xhyn_graphics", "ScreenHeight", ""); }).create();
+        EditText width = number(panel, "Base width (320..7680)", cfg.get("xhyn","render_width",option("xhyn_graphics", "ScreenWidth", "1280")));
+        EditText height = number(panel, "Base height (180..4320)", cfg.get("xhyn","render_height",option("xhyn_graphics", "ScreenHeight", "720")));
+        SeekBar scale=new SeekBar(activity);scale.setTag("xhyn-render-scale");scale.setMax(100);scale.setProgress(cfg.getInt("xhyn","render_percent",0,0,100));panel.addView(scale);
+        TextView value=MenuStyle.text(activity,"",14,0xfff2f2f0);value.setTag("xhyn-render-scale-label");panel.addView(value);
+        Runnable update=()->{int percent=scale.getProgress();if(percent==0)value.setText("0% · Use game resolution");else try{int[] size=XhynV02Graphics.resolution(Integer.parseInt(width.getText().toString()),Integer.parseInt(height.getText().toString()),percent);value.setText(percent+"% · "+size[0]+" × "+size[1]+" (minimum 320 × 180)");}catch(Exception ignored){value.setText(percent+"% · Enter a valid base size");}};
+        scale.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){public void onProgressChanged(SeekBar s,int progress,boolean user){update.run();}public void onStartTrackingTouch(SeekBar s){}public void onStopTrackingTouch(SeekBar s){}});update.run();
+        android.text.TextWatcher watcher=new android.text.TextWatcher(){public void beforeTextChanged(CharSequence s,int start,int count,int after){}public void onTextChanged(CharSequence s,int start,int before,int count){update.run();}public void afterTextChanged(android.text.Editable e){}};width.addTextChangedListener(watcher);height.addTextChangedListener(watcher);
+        AlertDialog dialog = new MenuDialogBuilder(activity).setTitle("Render resolution").setView(panel).setPositiveButton("Save", null).setNegativeButton("Cancel", null).setNeutralButton("Use game resolution", (d,w) -> {if(restoreGraphics(Arrays.asList(XhynV02Graphics.SIZE)))put("xhyn","render_percent","0");}).create();
         dialog.setOnShowListener(d -> dialog.getButton(-1).setOnClickListener(v -> {
-            try { int w = Integer.parseInt(width.getText().toString()), h = Integer.parseInt(height.getText().toString()); if (w < 320 || w > 7680 || h < 180 || h > 4320) throw new IOException("Use a width of 320..7680 and a height of 180..4320"); int[] dimensions = XhynV02Graphics.resolution(w, h, Integer.parseInt(scale.getText().toString())); put("xhyn_graphics", "ScreenWidth", Integer.toString(dimensions[0])); put("xhyn_graphics", "ScreenHeight", Integer.toString(dimensions[1])); toast(dimensions[0] + " × " + dimensions[1] + " saved"); dialog.dismiss(); } catch (Exception e) { error(e); }
+            try {int percent=scale.getProgress();if(percent==0){if(restoreGraphics(Arrays.asList(XhynV02Graphics.SIZE))){put("xhyn","render_percent","0");dialog.dismiss();}return;}
+                int w = Integer.parseInt(width.getText().toString()), h = Integer.parseInt(height.getText().toString()); if (w < 320 || w > 7680 || h < 180 || h > 4320) throw new IOException("Use a width of 320..7680 and a height of 180..4320");
+                int[] dimensions = XhynV02Graphics.resolution(w, h, percent);RuntimeConfig live=RuntimeConfig.load(cfg.root);
+                live.put("xhyn","render_width",Integer.toString(w));live.put("xhyn","render_height",Integer.toString(h));live.put("xhyn","render_percent",Integer.toString(percent));
+                live.put("xhyn_graphics","screenwidth",Integer.toString(dimensions[0]));live.put("xhyn_graphics","screenheight",Integer.toString(dimensions[1]));live.save();cfg=live;activity.config=live;
+                toast(dimensions[0] + " × " + dimensions[1] + " saved"); dialog.dismiss(); } catch (Exception e) { error(e); }
         })); dialog.show();
     }
     private EditText number(LinearLayout parent, String hint, String value) { EditText field = MenuStyle.input(activity); field.setHint(hint); field.setText(value); field.setInputType(InputType.TYPE_CLASS_NUMBER); parent.addView(field); return field; }
     private void fps() {
-        LinearLayout panel = new LinearLayout(activity); panel.setOrientation(LinearLayout.VERTICAL); EditText value = number(panel, "0 = unlimited; otherwise 10..240", Integer.toString(XhynV02Runtime.frameLimit(cfg)));
+        int active=XhynV02Runtime.frameLimit(cfg);try{active=XhynV02Runtime.effectiveFrameLimit(activity,cfg);}catch(Exception ignored){}
+        LinearLayout panel = new LinearLayout(activity); panel.setOrientation(LinearLayout.VERTICAL); EditText value = number(panel, "0 = unlimited; otherwise 10..240", Integer.toString(Math.max(0,active)));
         AlertDialog dialog = new MenuDialogBuilder(activity).setTitle("Rendered FPS cap").setView(panel).setPositiveButton("Save", null).setNegativeButton("Cancel", null).create();
-        dialog.setOnShowListener(d -> dialog.getButton(-1).setOnClickListener(v -> { try { int cap = Integer.parseInt(value.getText().toString()); if (cap != 0 && (cap < 10 || cap > 240)) throw new IOException("Choose 0, or 10..240 FPS"); removeOverride("dxgi.maxFrameRate"); put("performance", "frame_limit", Integer.toString(cap)); dialog.dismiss(); draw(); } catch (Exception e) { error(e); } })); dialog.show();
+        dialog.setOnShowListener(d -> dialog.getButton(-1).setOnClickListener(v -> { try { int cap = Integer.parseInt(value.getText().toString()); if (cap != 0 && (cap < 10 || cap > 240)) throw new IOException("Choose 0, or 10..240 FPS"); removeOverride("dxgi.maxFrameRate");removeOverride("dxvk.maxFrameRate"); put("performance", "frame_limit", Integer.toString(cap)); dialog.dismiss(); draw(); } catch (Exception e) { error(e); } })); dialog.show();
     }
     private void editor() {
         try {
-            EditText field = MenuStyle.input(activity); field.setText(XhynV02Config.read(XhynV02Runtime.saved(cfg))); field.setTextSize(13); field.setTypeface(android.graphics.Typeface.MONOSPACE); field.setMinLines(8); field.setGravity(Gravity.TOP); field.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
+            EditText field = MenuStyle.input(activity); field.setTag("xhyn-dxvk-editor");field.setText(XhynV02Runtime.preview(activity,RuntimeConfig.load(cfg.root))); field.setTextSize(13); field.setTypeface(android.graphics.Typeface.MONOSPACE); field.setMinLines(8); field.setGravity(Gravity.TOP); field.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
             ScrollView scroll = new ScrollView(activity); scroll.addView(field);
-            AlertDialog dialog = new MenuDialogBuilder(activity).setTitle("dxvk.conf · saved overrides").setView(scroll).setPositiveButton("Save", null).setNegativeButton("Cancel", null).create();
-            dialog.setOnShowListener(d -> dialog.getButton(-1).setOnClickListener(v -> { try { saveConfig(field.getText().toString()); dialog.dismiss(); } catch (Exception e) { error(e); } })); dialog.show();
+            final String active=field.getText().toString();
+            AlertDialog dialog = new MenuDialogBuilder(activity).setTitle("dxvk.conf · active configuration").setView(scroll).setPositiveButton("Save", null).setNegativeButton("Cancel", null).create();
+            dialog.setOnShowListener(d -> dialog.getButton(-1).setOnClickListener(v -> { try {
+                String previous;try{previous=XhynV02Config.read(XhynV02Runtime.saved(cfg));}catch(IOException invalidOld){previous="";}
+                saveConfig(XhynV02Config.editedOverrides(active,field.getText().toString(),previous,XhynV02Runtime.managedKeys(activity,cfg)));dialog.dismiss();
+            } catch (Exception e) { error(e); } })); dialog.show();
         } catch (Exception e) { error(e); }
     }
     private void saveConfig(String text) throws Exception {
-        XhynV02Config.validate(text); XhynV02Config.write(XhynV02Runtime.saved(cfg), text);
+        XhynV02Config.validate(text);
+        File file=XhynV02Runtime.saved(cfg);boolean existed=file.exists();String previous=null;
+        // Explicit Save can repair an old oversized/invalid file. Such a file is
+        // never read without bounds just to create an in-memory rollback copy.
+        try{previous=XhynV02Config.read(file);}catch(IOException unreadableOld){}
+        XhynV02Config.write(file,text);
+        try{put("xhyn","dxvk_conf_enabled","true");}
+        catch(Exception failedEnable){
+            try{if(XhynV02Config.read(file).equals(XhynV02Config.normalize(text))){if(previous!=null)XhynV02Config.write(file,previous);else if(!existed&&!file.delete())throw new IOException("Could not remove incomplete configuration");}}
+            catch(Exception rollback){failedEnable.addSuppressed(rollback);}throw failedEnable;
+        }
+        draw();
         List<String> unknown = XhynV02Config.unsupported(text, XhynV02Runtime.supported(activity, cfg));
-        if (!unknown.isEmpty()) info("Saved with unsupported options", "The selected renderer does not advertise these options. They may be ignored:\n" + String.join("\n", unknown)); else toast("dxvk.conf saved for the next game launch");
+        if("custom".equals(cfg.get("dxvk","source","builtin")))toast("Saved. Imported renderer option support is unknown; check its documentation.");
+        else if (!unknown.isEmpty()) info("Saved with unsupported options", "The selected renderer does not advertise these options. They may be ignored:\n" + String.join("\n", unknown)); else toast("dxvk.conf saved for the next game launch");
     }
     private void updateProbe() {
         if(probeStatus==null || isFinishing())return;
@@ -215,7 +322,7 @@ public final class XhynV02Settings {
         String version = ((api >>> 22) & 127) + "." + ((api >>> 12) & 1023);
         String details = result.optString("status") + " · " + result.optString("device", "GPU not identified")
                 + "\n" + result.optString("driverName") + " · Vulkan " + version;
-        if ("PASS".equals(result.optString("status"))) details += "\nTwo test frames presented. Game compatibility is not established.";
+        if ("PASS".equals(result.optString("status"))) details += "\n"+XhynV02Compatibility.advice(result,"custom".equals(cfg.get("dxvk","source","builtin"))?"custom":cfg.get("dxvk","builtin_id","gplall-async"));
         else details += "\n" + result.optString("error");
         probeStatus.setText(details);
     }
@@ -240,7 +347,7 @@ public final class XhynV02Settings {
             try {
                 if (request == IMPORT_CONFIG) {
                     byte[] bytes = readBounded(uri, XhynV02Config.LIMIT); String text = new String(bytes, StandardCharsets.UTF_8);
-                    XhynV02Config.validate(text); XhynV02Config.write(XhynV02Runtime.saved(cfg), text); runOnUiThread(() -> { try { saveConfig(text); } catch (Exception e) { error(e); } });
+                    XhynV02Config.validate(text); runOnUiThread(() -> { try { saveConfig(text); } catch (Exception e) { error(e); } });
                 } else if (request == EXPORT_REPORT) {
                     if(exportReport==null)exportReport=new File(getCacheDir(),"xhyn-last-session.zip").getAbsolutePath();
                     try (InputStream input = new FileInputStream(exportReport); OutputStream out = getContentResolver().openOutputStream(uri, "w")) { byte[] buffer = new byte[65536]; int count; while ((count = input.read(buffer)) != -1) out.write(buffer, 0, count); } runOnUiThread(() -> toast("Session report exported"));

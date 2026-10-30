@@ -9,6 +9,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <stdint.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -149,6 +150,8 @@ static jstring probe(JNIEnv *env, jobject java_surface) {
     uint32_t image_count = 0, frames_presented = 0;
     VkPhysicalDeviceProperties properties = {0};
     VkPhysicalDeviceFeatures features = {0};
+    VkFormatProperties bc1={0},bc3={0},bc7={0};
+    bool load_store_none=false, memory_budget=false;
     VkPhysicalDeviceDriverProperties driver = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES};
     VkPhysicalDeviceExtendedDynamicState3FeaturesEXT dynamic = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT};
     VkResult result = VK_SUCCESS;
@@ -180,6 +183,22 @@ static jstring probe(JNIEnv *env, jobject java_surface) {
     }
     vkGetPhysicalDeviceProperties(physical, &properties);
     vkGetPhysicalDeviceFeatures(physical, &features);
+    INSTANCE_FN(vkGetPhysicalDeviceFormatProperties);
+    if(vkGetPhysicalDeviceFormatProperties){
+        vkGetPhysicalDeviceFormatProperties(physical,VK_FORMAT_BC1_RGBA_UNORM_BLOCK,&bc1);
+        vkGetPhysicalDeviceFormatProperties(physical,VK_FORMAT_BC3_UNORM_BLOCK,&bc3);
+        vkGetPhysicalDeviceFormatProperties(physical,VK_FORMAT_BC7_UNORM_BLOCK,&bc7);
+    }
+    INSTANCE_FN(vkEnumerateDeviceExtensionProperties);
+    if(vkEnumerateDeviceExtensionProperties){uint32_t count=0;
+        if(vkEnumerateDeviceExtensionProperties(physical,NULL,&count,NULL)==VK_SUCCESS&&count<=512){VkExtensionProperties list[512];
+            VkResult found=vkEnumerateDeviceExtensionProperties(physical,NULL,&count,list);
+            if(found==VK_SUCCESS||found==VK_INCOMPLETE)for(uint32_t n=0;n<count&&n<512;++n){
+                if(!strcmp(list[n].extensionName,"VK_KHR_load_store_op_none")||!strcmp(list[n].extensionName,"VK_EXT_load_store_op_none"))load_store_none=true;
+                if(!strcmp(list[n].extensionName,VK_EXT_MEMORY_BUDGET_EXTENSION_NAME))memory_budget=true;
+            }
+        }
+    }
     INSTANCE_FN(vkGetPhysicalDeviceProperties2);
     if (vkGetPhysicalDeviceProperties2) {
         VkPhysicalDeviceProperties2 props = {.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2, .pNext = &driver};
@@ -382,16 +401,16 @@ cleanup:
     if (window) ANativeWindow_release(window);
     if (instance && destroy_instance) destroy_instance(instance, NULL);
     if (library) dlclose(library);
-    char gpu_name[768], driver_name[768], driver_info[768], failure[768], json[4096];
+    char gpu_name[768], driver_name[768], driver_info[768], failure[768], json[8192];
     escaped(gpu_name, sizeof(gpu_name), properties.deviceName);
     escaped(driver_name, sizeof(driver_name), driver.driverName);
     escaped(driver_info, sizeof(driver_info), driver.driverInfo);
     escaped(failure, sizeof(failure), error);
     snprintf(json, sizeof(json),
-        "{\"status\":\"%s\",\"device\":\"%s\",\"vendorId\":%u,\"deviceId\":%u,\"driverId\":%u,\"driverName\":\"%s\",\"driverInfo\":\"%s\",\"apiVersion\":%u,\"dualSrcBlend\":%s,\"reportedBcCompression\":%s,\"dynamicSampleLocations\":%s,\"presentedFrames\":%u,\"error\":\"%s\",\"scope\":\"Basic Vulkan triangle and Android presentation; no game or texture correctness validation\"}",
+        "{\"status\":\"%s\",\"device\":\"%s\",\"vendorId\":%u,\"deviceId\":%u,\"driverId\":%u,\"driverName\":\"%s\",\"driverInfo\":\"%s\",\"apiVersion\":%u,\"dualSrcBlend\":%s,\"reportedBcCompression\":%s,\"dynamicSampleLocations\":%s,\"loadStoreOpNone\":%s,\"memoryBudgetReported\":%s,\"bc1OptimalFeatures\":%u,\"bc3OptimalFeatures\":%u,\"bc7OptimalFeatures\":%u,\"presentedFrames\":%u,\"error\":\"%s\",\"scope\":\"Basic Vulkan triangle and Android presentation; format flags are loader reports, not texture/readback correctness tests. No game compatibility certification.\"}",
         status, gpu_name, properties.vendorID, properties.deviceID, driver.driverID, driver_name, driver_info, properties.apiVersion,
         features.dualSrcBlend ? "true" : "false", features.textureCompressionBC ? "true" : "false",
-        dynamic.extendedDynamicState3SampleLocationsEnable ? "true" : "false", frames_presented, failure);
+        dynamic.extendedDynamicState3SampleLocationsEnable ? "true" : "false",load_store_none?"true":"false",memory_budget?"true":"false",bc1.optimalTilingFeatures,bc3.optimalTilingFeatures,bc7.optimalTilingFeatures, frames_presented, failure);
     return (*env)->NewStringUTF(env, json);
 }
 
@@ -401,3 +420,5 @@ JNIEXPORT jstring JNICALL Java_com_gtavsource_android_XhynV02Native_identity(JNI
 JNIEXPORT jstring JNICALL Java_com_gtavsource_android_XhynV02Native_probe(JNIEnv *env, jclass type, jobject surface) {
     (void)type; return probe(env, surface);
 }
+
+#include "xhyn_observer.c"

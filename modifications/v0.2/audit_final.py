@@ -108,7 +108,7 @@ with zipfile.ZipFile(original) as a,zipfile.ZipFile(final) as b,final.open('rb')
 
 A=APK(str(original));B=APK(str(final));android='{http://schemas.android.com/apk/res/android}'
 meta={'package':B.get_package(),'label':B.get_app_name(),'version_name':B.get_androidversion_name(),'version_code':B.get_androidversion_code(),'min_sdk':B.get_min_sdk_version(),'target_sdk':B.get_target_sdk_version()}
-check(meta['package']=='com.xhynph.xhynv.reborn174' and meta['label']=='XHYN V' and meta['version_name']=='0.2-hotfix1' and meta['version_code']=='201','XHYN V 0.2 application identity')
+check(meta['package']=='com.xhynph.xhynv.reborn174' and meta['label']=='XHYN V' and meta['version_name']=='0.2-hotfix2' and meta['version_code']=='202','XHYN V 0.2 application identity')
 check(set(A.get_permissions())==set(B.get_permissions()),'No added Android permissions')
 check(set(A.get_activities())|{'com.gtavsource.android.XhynV02ProbeActivity'}==set(B.get_activities()),'Original launcher activities plus private probe; no standalone settings Activity')
 check(set(A.get_services())==set(B.get_services()),'Original download and diagnostic services retained')

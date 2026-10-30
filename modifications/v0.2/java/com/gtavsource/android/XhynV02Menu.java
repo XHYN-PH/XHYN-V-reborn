@@ -36,7 +36,7 @@ public final class XhynV02Menu {
     }
     public static void render(GameMenuActivity activity) {
         LinearLayout content=activity.content;
-        content.addView(MenuStyle.heading(activity,"XHYN V 0.2 Hotfix 1"));
+        content.addView(MenuStyle.heading(activity,"XHYN V 0.2 Hotfix 2"));
         content.addView(MenuStyle.text(activity,"Maintained by XHYN\n\nGTA V for Android, with touch controls, graphics settings and a Story Mode trainer. The engine runs ARM64 Android code; this edition uses DXVK for graphics translation.\n\nUse your own compatible GTA V Legacy files. Performance and compatibility depend on your device, driver and settings.",14,0xffb3b5b9));
         link(activity,content,"Telegram","XHYN V",TELEGRAM);
         link(activity,content,"YouTube","@xhyn_ph",YOUTUBE);

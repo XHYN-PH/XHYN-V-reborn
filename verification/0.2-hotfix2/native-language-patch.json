@@ -1,0 +1,135 @@
+{
+  "source_sha256": "e8c6210a675c0741f7d46c77c0c41cf90698d94f1f954527f4cf856fb2dc16be",
+  "patched_sha256": "1462d59dd75e2b87f08a5d7528442a628b153f385214436e5de8b5cf595f98e1",
+  "locale_gate": "0xfceca4",
+  "removed_locale_callers": [
+    "0xfcec7c",
+    "0xfcf474"
+  ],
+  "font_storage": "0xfceda4",
+  "archive_storage": "0xfcedc4",
+  "edits": [
+    {
+      "label": "Accept all Android system languages",
+      "address": "0xfcec7c",
+      "offset": 16559228,
+      "before": "0a000094",
+      "after": "20008052"
+    },
+    {
+      "label": "Accept all Android system languages",
+      "address": "0xfcf474",
+      "offset": 16561268,
+      "before": "0cfeff97",
+      "after": "20008052"
+    },
+    {
+      "label": "Use non-Asian text formatting",
+      "address": "0x23204d0",
+      "offset": 36816080,
+      "before": "20008052",
+      "after": "00008052"
+    },
+    {
+      "label": "Select English language ID 1",
+      "address": "0x23204d8",
+      "offset": 36816088,
+      "before": "a0018052",
+      "after": "20008052"
+    },
+    {
+      "label": "Select English language ID 1",
+      "address": "0x23204ec",
+      "offset": 36816108,
+      "before": "a0018052",
+      "after": "20008052"
+    },
+    {
+      "label": "Accept English language ID",
+      "address": "0x2320524",
+      "offset": 36816164,
+      "before": "1f340071",
+      "after": "1f040071"
+    },
+    {
+      "label": "Dedicated language name in unreachable locale gate",
+      "address": "0xfceda4",
+      "offset": 16559524,
+      "before": "680240f9f50300aae00313aa089143f9",
+      "after": "65666967730000000000000000000000"
+    },
+    {
+      "label": "Dedicated language name in unreachable locale gate",
+      "address": "0xfcedc4",
+      "offset": 16559556,
+      "before": "a1120054680240f9c2b3ffb042d83091",
+      "after": "616d65726963616e0000000000000000"
+    },
+    {
+      "label": "Use English font/text resource name",
+      "address": "0x232069c",
+      "offset": 36816540,
+      "before": "e019ff9000ec2f91",
+      "after": "6065ffd000903691"
+    },
+    {
+      "label": "Use English font/text resource name",
+      "address": "0x23206b4",
+      "offset": 36816564,
+      "before": "001aff9000003191",
+      "after": "6065ffd000903691"
+    },
+    {
+      "label": "Use English font/text resource name",
+      "address": "0x2321dcc",
+      "offset": 36822476,
+      "before": "e319fff063003191",
+      "after": "6365ffb063103791"
+    },
+    {
+      "label": "Use English font/text resource name",
+      "address": "0x2321e2c",
+      "offset": 36822572,
+      "before": "e319fff063003191",
+      "after": "6365ffb063103791"
+    },
+    {
+      "label": "Use English font/text resource name",
+      "address": "0x2321e4c",
+      "offset": 36822604,
+      "before": "e319fff063003191",
+      "after": "6365ffb063103791"
+    },
+    {
+      "label": "Use English font/text resource name",
+      "address": "0x2323358",
+      "offset": 36827992,
+      "before": "e319ffb063003191",
+      "after": "4365fff063103791"
+    },
+    {
+      "label": "Use English font/text resource name",
+      "address": "0x2323398",
+      "offset": 36828056,
+      "before": "e319ffb063003191",
+      "after": "4365fff063103791"
+    },
+    {
+      "label": "Use English font/text resource name",
+      "address": "0x23233d8",
+      "offset": 36828120,
+      "before": "e319ffb063003191",
+      "after": "4365fff063103791"
+    },
+    {
+      "label": "English native HUD test notification",
+      "address": "0x69432b",
+      "offset": 6898475,
+      "before": "485544206e6f74696669636174696f6e2025753a206f726967696e616c2070726f706f7274696f6e732e7e6e7e4c6f6e672074657874206d757374207772617020776974686f757420636c697070696e67207468652066696e616c20776f7264732e7e6e7ee9809ae79fa5e698bee7a4bae6b58be8af95efbc9ae4bf9de68c81e6b8b8e6888fe58e9fe6af94e4be8befbc8ce5ae8ce695b4e698bee7a4bae4b8ade69687e4b88ee88bb1e69687e38082",
+      "after": "485544206e6f74696669636174696f6e2025753a206f726967696e616c2070726f706f7274696f6e732e7e6e7e4c6f6e672074657874206d757374207772617020776974686f757420636c697070696e67207468652066696e616c20776f7264732e7e6e7e446973706c617920746573743a206b656570206f726967696e616c2070726f706f7274696f6e7320616e642073686f7720616c6c20746578742e0000000000000000000000000000000000"
+    }
+  ],
+  "unwind_dynamic_and_relocation_sections_unchanged": true,
+  "size_unchanged": true,
+  "scope": "Exact-build English language selectors, Android locale gate and native HUD test message"
+}

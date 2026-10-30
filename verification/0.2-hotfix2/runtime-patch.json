@@ -1,0 +1,37 @@
+{
+  "methods": [
+    "StableFrameProfile->apply(Lcom/gtavsource/android/GTAVActivity;Lcom/gtavsource/android/RuntimeConfig;)V",
+    "StableFrameProfile->limit(Lcom/gtavsource/android/RuntimeConfig;)I",
+    "StableFrameProfile->menu(Lcom/gtavsource/android/GameMenuActivity;)V",
+    "StableFrameProfile->framegen(Lcom/gtavsource/android/RuntimeConfig;)Z",
+    "DriverManager->prepare(Landroid/content/Context;Lcom/gtavsource/android/RuntimeConfig;Z)Ljava/lang/String;",
+    "DriverPackage->prepare(Ljava/io/File;Ljava/lang/String;Ljava/io/File;I)Lcom/gtavsource/android/DriverPackage;",
+    "GTAVActivity->loadLibraries()V",
+    "GTAVActivity->showLibraryLoadFailure(Ljava/lang/LinkageError;)V",
+    "GTAVActivity->onDestroy()V",
+    "GTAVActivity->onResume()V",
+    "GTAVActivity->onPause()V",
+    "GTAVActivity$GameSurface->surfaceCreated(Landroid/view/SurfaceHolder;)V",
+    "GTAVActivity$GameSurface->surfaceChanged(Landroid/view/SurfaceHolder;III)V",
+    "FrameGenerationOverlay->attach(Landroid/app/Activity;)V",
+    "GameMenuActivity->performance()V",
+    "GameMenuActivity->drivers()V",
+    "GameMenuActivity->display()V",
+    "GameMenuActivity->dxvkVersions()V",
+    "GameMenuActivity->about()V",
+    "GameMenuActivity->about()V",
+    "GameMenuActivity->onResume()V",
+    "GameMenuActivity->onDestroy()V",
+    "GameMenuActivity->onActivityResult(IILandroid/content/Intent;)V",
+    "MenuPages-><clinit>()V",
+    "GameMenuActivity->showPage(IZ)V",
+    "RemoteNoticeContent->fetch()Ljava/lang/String;",
+    "DxvkBuiltins->load(Landroid/content/Context;)Lcom/gtavsource/android/DxvkBuiltins;"
+  ],
+  "option_counts": {
+    "gplall-async": 66,
+    "upstream": 62,
+    "sarek": 57
+  },
+  "game_download_component": "original page and download components retained at the user\u2019s request"
+}

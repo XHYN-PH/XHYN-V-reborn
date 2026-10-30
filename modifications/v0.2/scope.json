@@ -1,8 +1,8 @@
 {
-  "release": "0.2-hotfix1",
+  "release": "0.2-hotfix2",
   "applicationId": "com.xhynph.xhynv.reborn174",
   "applicationLabel": "XHYN V",
-  "versionCode": 201,
+  "versionCode": 202,
   "input": {
     "name": "GTAV-Master-1.7.26-\u4effPC\u4fee\u6539\u5668.apk",
     "sha256": "da730ee5b153cdf9a162d2dacd7bec45f0bf8a143f928a29d359c5c97ae51191",
@@ -53,11 +53,13 @@
     "10": "No general game-file scan, archive-header preflight, or launch gate based on a complete game-file manifest.",
     "16": "No automatic clean-baseline mode and no automatic disabling of the user's mods or trainer.",
     "20": "Selected runtime script/API failure checks remain in scope without adding the excluded general game-file preflight.",
-    "nativeRenderer": "This release targets the uploaded SDL3/DXVK base. The earlier SDL2 native-Vulkan/SDL3-compat experiment is not represented as a working bundled engine."
+    "nativeRenderer": "This release targets the uploaded SDL3/DXVK base. The earlier SDL2 native-Vulkan/SDL3-compat experiment is not represented as a working bundled engine.",
+    "graphicsReset": "The user subsequently requested targeted graphics default restoration. Only recorded original attributes are restored; no generic profile rollback UI is added."
   },
   "releaseRule": "Record implemented, partial, and unverified items separately. Do not claim device gameplay validation or universal GPU support from host checks.",
   "hotfix": {
     "navigation": "Existing System group and Diagnostics routes preserved; About is new page 21.",
     "settings": "Display, Performance, Vulkan Drivers, DXVK and Diagnostics each receive only their relevant controls; existing driver import/selection is the single driver interface."
-  }
+  },
+  "expandedPerformanceStatus": "docs/issues/0.2-hotfix2-work-status.md; implemented, partial and blocked items are explicitly distinguished"
 }

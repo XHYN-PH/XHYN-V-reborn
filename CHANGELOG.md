@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2 Hotfix 2 — 30 October 2026
+
+- Added an adjustable 0–100% render-scale slider; 0 uses the game resolution.
+- Added graphics-quality reset actions using recorded original values.
+- Made the dxvk.conf editor and effective view show the same active settings.
+- Added renderer-aware DXVK tuning for VRAM, memory budget, shaders, filtering and advanced compatibility settings, synchronized with the text editor.
+- Added information buttons explaining settings, possible performance effects and tradeoffs across graphics, performance, drivers and diagnostics.
+- Added experimental DX11/DX10.1 feature-level limits; DX10.1 may prevent startup and still uses Vulkan.
+- Simplified Diagnostics to Record next game and Save report to share.
+- Added optional graphics compatibility advice, display-refresh matching and experimental Android performance hints.
+- Improved short-report memory and graphics measurements.
+
+Deeper engine optimizations and older native crashes remain under investigation.
+
 ## 0.2 Hotfix 1 — 30 October 2026
 
 - Restored System navigation, Diagnostics and the Game Resources page.

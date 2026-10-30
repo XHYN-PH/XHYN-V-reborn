@@ -36,3 +36,17 @@ game version and reproduction steps.
 The mod-spawn provider authority follows the XHYN application ID. External companion tools targeting the original package authority need to select the XHYN authority instead. Internal references are updated together.
 
 Hotfix 1 additionally checks launcher routes and constructor inheritance before packaging, and runs API 30 Android-view regression tests. The separate settings Activity is removed. Controls are divided across Display, Performance, Vulkan Drivers, DXVK and Diagnostics; the original driver picker is the only importer/selector. Invalid old overrides do not erase saved text or become a folder-validation failure. See the sanitized additional crash triage in docs/issues.
+
+Hotfix 2 adds the requested scale/default/editor/Diagnostics controls, optional
+Vulkan allocation and presentation measurements, feature advice and Android
+display/hint lifecycle integration. The [expanded 22-item status](../../docs/issues/0.2-hotfix2-work-status.md)
+separates delivered functionality from investigations and unavailable engine
+integrations. Audio/resource lifetime repair, asset scheduling, new texture
+residency, dynamic resolution and native render-pass changes are not claimed.
+
+Renderer-aware DXVK tuning controls now share the editor's writer and active
+configuration. Memory reports/budgets, shader/cache, image quality and advanced
+compatibility controls include purpose and performance-tradeoff help. Other
+graphics/performance/driver/diagnostic controls include similar help. The
+DX10.1 feature-level limit is experimental, may block startup and does not remove
+the Vulkan requirements. These controls do not establish a measured FPS gain.

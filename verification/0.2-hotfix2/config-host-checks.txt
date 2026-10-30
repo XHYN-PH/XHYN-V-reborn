@@ -1,0 +1,56 @@
+PASS 319 configuration and driver-policy host checks
+INFO Found config file: <build>/config-host-tests/all-options-effective.conf
+INFO Effective configuration:
+INFO   d3d11.relaxedGraphicsBarriers = True
+INFO   d3d11.maxFeatureLevel = 11_0
+INFO   d3d11.relaxedBarriers = True
+INFO   dxgi.maxFrameRate = 60
+INFO   dxgi.maxFrameLatency = 2
+INFO   dxvk.hud = fps,version
+INFO   d3d11.samplerLodBias = 1.0
+INFO   dxgi.maxDeviceMemory = 1536
+INFO   dxvk.maxMemoryBudget = 1024
+INFO   d3d11.maxTessFactor = 16
+INFO   dxgi.maxSharedMemory = 4096
+INFO   d3d11.samplerAnisotropy = 16
+INFO   dxvk.enableStateCache = True
+INFO   d3d11.disableMsaa = True
+INFO   dxvk.numCompilerThreads = 4
+INFO   dxvk.useRawSsbo = True
+PASS Custom compiler count overrides managed count
+PASS Custom HUD overrides managed HUD in native parser
+PASS Custom reported VRAM cap overrides managed cap
+PASS Shared-memory cap parsed
+PASS Allocation budget parsed
+PASS Anisotropic filtering parsed
+PASS Tessellation factor parsed
+PASS Corrected LOD bias parsed
+PASS MSAA disable parsed
+PASS State cache parsed
+PASS Raw-buffer tristate parsed
+PASS Relaxed barriers parsed
+PASS Relaxed graphics barriers parsed
+PASS Feature-level cap parsed
+PASS Removed D3D9 setting absent from native config
+PASS Engine fallback cannot force two workers
+INFO Found config file: <build>/config-host-tests/ui-global.conf
+PASS Unified controls write native-readable quoted compiler count
+PASS Unified controls write native-readable quoted memory budget
+PASS Unified HUD off parses as an explicit empty string
+INFO Found config file: <build>/config-host-tests/ui-scoped.conf
+PASS Native executable section takes disclosed priority over global controls
+PASS Unrelated global memory value survives section matching
+INFO Found config file: <build>/config-host-tests/tuning-controls.conf
+PASS DX10.1 control writes a native-readable feature limit
+PASS VRAM button value reaches the native parser in MiB
+PASS Shared-memory button value reaches native parser
+PASS Actual allocation budget stays distinct from reported memory
+PASS Resource-cache flags survive the UI config writer
+PASS Explicit async Off survives native boolean parsing
+PASS Automatic raw storage buffers uses native tristate
+PASS Automatic defragmentation uses native tristate
+PASS GPLALL pacing mode survives native string parsing
+PASS Context-lock compatibility control parsed
+PASS Float-control correctness option parsed
+PASS HUD Off remains an intentional empty string
+TOTAL 33 upstream parser checks; host only

@@ -14,7 +14,7 @@ public final class XhynV02Reports {
         String id = context.getSharedPreferences("xhyn-v02", 0).getString("lastSession", "");
         if (!id.matches("[A-Za-z0-9-]{1,100}")) {
             File startup=new File(context.getFilesDir(),"xhyn-launch-error.json");
-            if(!startup.isFile())throw new IOException("There is no session or startup error report yet.");
+            if(!startup.isFile())throw new IOException("No report is ready yet. Turn on Record next game, start the game and reproduce the problem, then return here to save the report.");
             File out=new File(context.getCacheDir(),"xhyn-last-session.zip");
             try(ZipOutputStream zip=new ZipOutputStream(new FileOutputStream(out))){addText(zip,"README.txt","Startup failed before a game session was created. This report contains that setup failure.\n");add(zip,"startup-error.json",startup,65536);}
             return out.getAbsolutePath();

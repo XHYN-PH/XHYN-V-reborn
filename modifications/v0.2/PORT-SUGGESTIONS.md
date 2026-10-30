@@ -20,3 +20,18 @@ Revisions reviewed:
 Driver admission, scoped Turnip flags, separate probe processes and bounded
 sampling informed the selected implementation. No FPS gain is established by
 these source references.
+
+## Expanded review and implementation
+
+The [Hotfix 2 work status](../../docs/issues/0.2-hotfix2-work-status.md) records
+all 22 subsequent proposals and explicitly identifies unavailable engine work.
+Additional pinned implementations reviewed:
+
+- [OpenMW cell preloading, cancellation and cache expiry](https://github.com/OpenMW/openmw/blob/cbb5b35743824bc898d930792e7bfbbf4fa2dc1c/apps/openmw/mwworld/cellpreloader.cpp).
+- [DIII4A texture-conversion caches](https://github.com/glKarin/com.n0n3m4.diii4a/blob/ce49510f3b0c04969eab8ebe8238416e84e4f0bb/doom3/neo/renderer/image/Image_load_compression.cpp).
+- [Android Source-engine texture request deduplication and residency](https://github.com/nillerusr/source-engine/blob/ed8209cc35c61fbd8ddff8480962a01c981eef2f/materialsystem/texturemanager.cpp).
+- [Xash3D culling and surface/decal batching](https://github.com/FWGS/xash3d-fwgs/blob/3daa67eca9a9f9651b37d63babe6dfc8ec6961ac/ref/gl/gl_rsurf.c).
+
+No game-specific implementation is transplanted. FH4Droid desktop benchmark
+numbers do not establish Android speedups, and its native replacements for
+recompiled PPC work do not imply equivalent gains in this ARM64 engine.
