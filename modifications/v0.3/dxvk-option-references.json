@@ -1,0 +1,26 @@
+{
+  "consulted": "2026-10-30",
+  "purpose": "Reference-only option units, types, semantics and warnings; option presence is checked against the actual selected bundled ELF catalog. Public reference source is not assumed to reproduce the custom binary exactly.",
+  "references": [
+    {
+      "url": "https://raw.githubusercontent.com/Digger1955/dxvk-gplall/DXVK-GPLALL-2.6.8-2/dxvk.conf",
+      "sha256": "6882685ddded33ce9476aaa9d2c8519f8d70ca9eff1b681df3f3df8b620bf38e"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Digger1955/dxvk-gplall/DXVK-GPLALL-2.6.8-2/src/d3d11/d3d11_main.cpp",
+      "sha256": "134e13caef643483502beb487e001abac2bef4bbba69d03927d8cfdb3da0e48d"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Digger1955/dxvk-gplall/DXVK-GPLALL-2.6.8-2/src/d3d11/d3d11_options.cpp",
+      "sha256": "db9c2a5ee7a26510e58df6c5674ca42ea76230f865f89da288438ce2f48b0595"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Digger1955/dxvk-gplall/DXVK-GPLALL-2.6.8-2/src/dxgi/dxgi_options.cpp",
+      "sha256": "dfacc4fcc8d62c31e6366bfd15444bbec1a6ed53f1226d4e1fa75cd00427f143"
+    },
+    {
+      "url": "https://raw.githubusercontent.com/Digger1955/dxvk-gplall/DXVK-GPLALL-2.6.8-2/src/dxvk/dxvk_options.cpp",
+      "sha256": "af9bfd86952780479a65ea308cefa68f1d3b90da45d6a26443a38681738982bd"
+    }
+  ]
+}

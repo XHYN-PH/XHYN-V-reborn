@@ -1,0 +1,36 @@
+{
+  "result": "PASS",
+  "checks": 9074,
+  "file": "XHYN-V-0.3-Preview1.apk",
+  "bytes": 103038466,
+  "sha256": "c70db00eec2554034318acd9fe63a40099f698c361e443dadeb98ce1368b47a2",
+  "metadata": {
+    "package": "com.xhynph.xhynv.reborn174",
+    "label": "XHYN V",
+    "version_name": "0.3-preview1",
+    "version_code": "300",
+    "min_sdk": "30",
+    "target_sdk": "36"
+  },
+  "original_classes": 3400,
+  "final_classes": 3504,
+  "original_native_libraries": 26,
+  "dictionary_entries": 5304,
+  "device_gameplay_tested": false,
+  "android_ui_execution_tested": false,
+  "host_android_view_tests": true,
+  "physical_gpu_probe_tested": false,
+  "scope": "Signed artifact structure, exact native modifications, preserved features, helper linkage and host/ARM64 checks; not gameplay qualification",
+  "source_tests": {
+    "launcher_android_view_tests": 34,
+    "english_checks": 8492,
+    "graphics_host_checks": 116,
+    "driver_host_checks": 10,
+    "log_and_comparison_checks": 18,
+    "advice_checks": 16,
+    "native_guard_cases": 57,
+    "observer_abi_cases": 26,
+    "native_component_host_checks": 70,
+    "asan_ubsan_checks": 70
+  }
+}

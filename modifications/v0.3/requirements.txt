@@ -1,0 +1,6 @@
+pyelftools==0.33
+unicorn==2.1.4
+capstone==5.0.9
+androguard==4.1.4
+loguru==0.7.3
+Pillow==12.0.0

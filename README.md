@@ -4,7 +4,7 @@
 
 **XHYN V brings GTA V to Android with touch controls, graphics and driver settings, and a Story Mode trainer.** Maintained by **XHYN-PH**, this edition brings setup and performance controls together so you can adjust the game for your device.
 
-**[Download XHYN V 0.2 Hotfix 2](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.2-hotfix2)** · **[Telegram](https://t.me/xhynv)** · **[YouTube](https://youtube.com/@xhyn_ph)** · **[Buy GTA V](https://store.rockstargames.com/game/buy-gta-v)**
+**[Download XHYN V 0.3 Preview 1](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.3-preview1)** · **[Telegram](https://t.me/xhynv)** · **[YouTube](https://youtube.com/@xhyn_ph)** · **[Buy GTA V](https://store.rockstargames.com/game/buy-gta-v)**
 
 ## What does this project provide?
 
@@ -35,11 +35,13 @@ XHYN V is therefore **a native ARM64 Android port with graphics API translation 
 
 ## Features
 
+- **LAN multiplayer:** experimental free roam for up to 10 players, with room chat, shared rides and street races. Use the same game version and matching mod resources on every device. Mission progress is not shared; this is separate from GTA Online.
+- **XHYN V Bridge:** an optional virtual LAN companion for remote rooms. Nearby players can use the same Wi-Fi or hotspot without Bridge.
 - **Game setup:** select a game folder, manage resources, and access archive extraction/moving tools.
 - **Touch and controller controls:** selectable/editable layouts, controls for different game states, camera/aim options, gyroscope and tilt-steering settings.
 - **Graphics and memory controls:** a 0–100% render-scale slider (0 uses game resolution), recorded graphics-default restoration, individual quality options, a lower-settings shortcut, population density, draw distance and texture-detail settings.
 - **Frame-rate controls:** rendered FPS cap, VSync, frame latency and display-refresh matching, with separate rendered/generated FPS labels for optional frame generation.
-- **DXVK tuning:** renderer-aware controls for VRAM reports, memory budget, shader compilation/caches, filtering and advanced compatibility options. Buttons and the `dxvk.conf` editor share the same active settings. Information buttons explain purpose, possible benefits and tradeoffs. [Tuning guide](modifications/v0.2/DXVK-TUNING.md).
+- **DXVK tuning:** renderer-aware controls for VRAM reports, memory budget, shader compilation/caches, filtering and advanced compatibility options. Buttons and the `dxvk.conf` editor share the same active settings. Information buttons explain purpose, possible benefits and tradeoffs. [Tuning guide](modifications/v0.3/DXVK-TUNING.md).
 - **Vulkan drivers:** System Vulkan, imported Android Vulkan drivers, experimental PanVK/Mali and Xclipse paths, plus Turnip GMEM/SYSMEM and One UI controls. An optional draw/present check helps identify driver problems; a pass does not guarantee gameplay compatibility.
 - **Shader caches:** separate cache locations by renderer and driver package, preserved across launches, with manual cleanup.
 - **Story Mode trainer:** character, vehicle, weapon and world options, vehicle customization, favorites and presets.
@@ -47,7 +49,7 @@ XHYN V is therefore **a native ARM64 Android port with graphics API translation 
 - **Diagnostics:** a simple record-next-game and save-report flow, plain-language error explanations, and optional memory/graphics measurements. Advanced diagnostic actions remain available.
 - **Project links:** an About page inside System, below Game Resources opens Telegram, YouTube and this repository. Menus and trainer presentation are in English, with no Chinese system-language requirement.
 
-XHYN V 0.2 uses the newer 1.7.26 runtime and retains its download page, PC-style trainer, touch layouts, custom radio and frame-generation options. Frame generation starts disabled on fresh installs. Compatibility and performance depend on your device, driver, settings and game data; experimental driver support does not imply support for every GPU.
+XHYN V 0.3 uses the 1.7.57 multiplayer runtime and retains its download page, PC-style trainer, touch layouts, custom radio and frame-generation options. Frame generation starts disabled on fresh installs. Compatibility and performance depend on your device, driver, settings and game data; experimental driver support does not imply support for every GPU.
 
 ## Requirements and installation
 
@@ -55,7 +57,7 @@ XHYN V 0.2 uses the newer 1.7.26 runtime and retains its download page, PC-style
 - Your own compatible **GTA V Legacy** files, including English text and fonts. The project's documented baseline is **1.61 / build 2699**.
 - Enough storage for the game, caches and imported content.
 
-1. Download and install the APK from the [release page](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.2-hotfix2).
+1. Download and install the APK from the [release page](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.3-preview1).
 2. Grant the requested file access and select the folder containing `common.rpf`, `x64` and `update`.
 3. Use **Display** for graphics, **Performance** for FPS, **Vulkan Drivers** for drivers, **DXVK** for configuration and **System → Diagnostics** for reports. Start with System Vulkan and lower settings if your device struggles.
 4. Fully close and reopen the game after changing its driver, renderer or graphics settings. Graphics-file overrides take effect once the game has created `save/settings.xml`.
@@ -65,13 +67,21 @@ compatibility limit is experimental and may prevent startup; restore Default or
 DX11 if that happens. It still uses DXVK/Vulkan. Higher reported VRAM does not
 add memory, and experimental overrides are not guaranteed performance boosts.
 
-The [expanded improvement status](docs/issues/0.2-hotfix2-work-status.md) distinguishes implemented changes from engine work still awaiting matching source and device investigation.
+The [improvement status](modifications/v0.3/STATUS.md) separates completed changes from native heap, resource-cleanup and BC texture work that still needs matching source and device investigation.
 
-Version 0.2 Hotfix 2 is a **development prerelease**, using the same app ID and release key as our previous English edition so it can install as an update. Device gameplay and GPU compatibility still need testing. Earlier editions with different app IDs remain separate installations.
+Version 0.3 Preview 1 is a **development prerelease**, using the same app ID and release key as our previous English edition so it can install as an update. Device gameplay and GPU compatibility still need testing. Earlier editions with different app IDs remain separate installations.
+
+## Remote play with Bridge
+
+Install the separate **XHYN V Bridge** APK from the same release. Join the same virtual network on each phone, keep Bridge connected, then enable **Virtual LAN** in the game's LAN menu and enter the host's virtual IPv4 and room code. Allow the game through the VPN. For local play, use the same Wi-Fi/hotspot and leave Virtual LAN off.
+
+Bridge is our English companion edition of Astral 2.9.60. Existing Astral room links remain compatible. It provides networking; it does not supply game files, official online services or synchronized missions.
 
 ## Source and credits
 
-We publish [our 0.2 helper classes, native helper, patches, build tools and tests](modifications/v0.2), with **MIT licensing** for newly written code under its [defined scope](modifications/v0.2/PROVENANCE.md). This is the source for our modification layer. Original engine and launcher code remain subject to their own terms and are not published here. The earlier [1.7.4 English layer](modifications/english-1.7.4) remains available.
+We publish [our 0.3 helper classes, native helper, patches, build tools and tests](modifications/v0.3), with **MIT licensing** for newly written game-modification code under its [defined scope](modifications/v0.3/PROVENANCE.md). This is the source for our modification layer. Original engine and launcher code remain subject to their own terms and are not published here. The earlier [1.7.4 English layer](modifications/english-1.7.4) remains available.
+
+[Bridge source changes](modifications/bridge) are available separately under Astral's **PolyForm Noncommercial** terms. They are not covered by the game helper layer's MIT license. Its original notices and dependencies remain credited inside the app.
 
 Credit for the original Android port, engine and third-party components belongs to their authors. See [source information](docs/SOURCE.md) and [credits/notices](docs/CREDITS.md).
 

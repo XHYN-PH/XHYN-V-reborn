@@ -1,0 +1,8 @@
+{
+  "name": "DXVK-GPLALL",
+  "tag": "DXVK-GPLALL-2.6.8-2",
+  "url": "https://github.com/Digger1955/dxvk-gplall/blob/DXVK-GPLALL-2.6.8-2/src/util/config/config.cpp",
+  "sha256": "f50c8fb66e031bdc37e94f181389ab69fb6cb1b42c984cf64acc849ef4b8f32c",
+  "modified": false,
+  "license": "zlib/libpng; see LICENSE"
+}
