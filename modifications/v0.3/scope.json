@@ -1,8 +1,8 @@
 {
-  "release": "0.3-preview1",
+  "release": "0.3-preview2",
   "applicationId": "com.xhynph.xhynv.reborn174",
   "applicationLabel": "XHYN V",
-  "versionCode": 300,
+  "versionCode": 301,
   "input": {
     "name": "GTAV 1.7.57 multiplayer base (GTAV.apk)",
     "sha256": "93f7850751a6ca172ba3cc6c42ca9abe1557dea1bba7b9def9d0bef0c9cd894d",
@@ -21,10 +21,10 @@
   ],
   "releaseRule": "Record implemented, partial, and unverified items separately. Do not claim device gameplay validation or universal GPU support from host checks.",
   "hotfix": {
-    "navigation": "Existing System group and Diagnostics routes preserved; About is new page 21.",
+    "navigation": "Existing System and Diagnostics routes preserved; Theme is page 21, LAN pages 22–24 and About page 25 below Game Resources.",
     "settings": "Display, Performance, Vulkan Drivers, DXVK and Diagnostics each receive only their relevant controls; existing driver import/selection is the single driver interface."
   },
-  "expandedPerformanceStatus": "docs/issues/0.3-preview1-work-status.md; implemented, partial and blocked items are explicitly distinguished",
+  "expandedPerformanceStatus": "docs/issues/0.2-hotfix2-work-status.md; implemented, partial and blocked items are explicitly distinguished",
   "prior_iteration_scope": {
     "excluded": [
       8,

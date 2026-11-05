@@ -239,7 +239,7 @@ public final class XhynV02Runtime {
         }
         JSONObject details = new JSONObject();
         details.put("session", sessionId).put("pid", android.os.Process.myPid()).put("start_ms", System.currentTimeMillis())
-                .put("version", "0.3-preview1").put("fingerprint", Build.FINGERPRINT).put("model", Build.MANUFACTURER + " " + Build.MODEL)
+                .put("version", "0.3-preview2").put("fingerprint", Build.FINGERPRINT).put("model", Build.MANUFACTURER + " " + Build.MODEL)
                 .put("requested_driver", driverKey(cfg)).put("renderer_source", cfg.get("dxvk", "source", "builtin"))
                 .put("renderer_id", rendererId(context,cfg)).put("renderer_zip_hash", rendererHash(cfg)).put("renderer_cache_identity",rendererCacheIdentity(context,cfg))
                 .put("cache", cache.getAbsolutePath()).put("graphics_applied", graphicsApplied)

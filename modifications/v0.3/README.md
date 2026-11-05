@@ -2,7 +2,7 @@
 
 Java interface/configuration helpers, a C reporting/probe helper, shaders,
 translations, guarded binary patches, the complete build driver and tests for
-version 0.3 Preview 1. See [scope](scope.json), [implementation status](STATUS.md) and
+version 0.3 Preview 2. See [scope](scope.json), [implementation status](STATUS.md) and
 [provenance](PROVENANCE.md). Original engine/launcher code is a separate input.
 
 The About page inside System, directly below Game Resources, uses the links in `XhynV02Menu.java`. The original
@@ -48,10 +48,19 @@ python modifications/v0.3/build.py \
   --password-file /private/path/password.txt
 ```
 
-Use `--verify-only` to stop after all checks, before any APK packaging or signing.
+Use `--verify-only` to stop after prepackage checks, before APK packaging or signing.
 Always use a fresh work directory. The driver verifies APK/tool hashes, decodes,
 patches, compiles only the new helpers, runs checks, packages, signs and audits.
 Compile-only stubs are not packaged. Signing keys/passwords are never copied.
+After packaging, the driver restores the base's 146 raw-path artwork files byte
+for byte before signing. Apktool omits these entries because they have no resource
+IDs; the original Application nevertheless opens them by exact ZIP path. They
+must stay uncompressed for `openNonAssetFd`. Artwork authentication is unchanged.
+The signed APK is then tested through its real Application startup and launcher
+create/resume on host Android APIs 30 and 35, using only its own packaged resources.
+Preview 1 lacked these files and failed before showing the launcher. The startup
+regression reproduces that failure; the earlier menu fixture borrowed original
+resources and therefore did not cover it. Physical-device execution remains untested.
 Omit all three signing arguments for an unsigned build; final signature/alignment
 qualification then remains incomplete. The new native helper targets API 30 with
 16 KiB segment alignment; this does not convert other base libraries' alignment.
@@ -116,7 +125,7 @@ entry branch with an ABI-tested trampoline. Tables and interval history are
 bounded. Presentation cadence is not rendered/GPU frame time; driver budgets are
 not process-owned memory. Android hints are off by default and require Android
 12+. Display requests reuse the existing FPS/output target. The app is shell
-profileable for developer CPU tools. See the [22-item implementation status](../../docs/issues/0.3-preview1-work-status.md)
+profileable for developer CPU tools. See the [22-item implementation status](../../docs/issues/0.2-hotfix2-work-status.md)
 for remaining engine work and device qualification.
 
 The prepackage UI suite executes original patched launcher DEX through a JVM
@@ -125,3 +134,10 @@ Android framework views, click targets, all page headers, config persistence and
 startup error paths on API 30 under Robolectric. Converter-only adjustments are
 recorded; converted classes never enter the APK. Physical Android UI, GPU and
 gameplay tests remain necessary for device qualification.
+
+The signed-artifact startup suite separately executes the real Application and
+launcher lifecycle using final APK resources on host APIs 30 and 35, including
+file-access denial and a writable selected folder. The fixture models mounted
+storage and the manifest theme's Android parent. Its JVM-only adapter corrects
+Enjarify's static-interface references and computes corresponding stack maps;
+original Android DEX and packaged code are never changed for host compatibility.

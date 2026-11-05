@@ -192,7 +192,7 @@ for line in s.splitlines():
     lines.append(line)
 assert next(comments, None) is None
 ini.write_text('\n'.join(lines) + '\n')
-(D / 'apktool.yml').write_text(re.sub(r'versionName: .*', 'versionName: "0.3-preview1"', (D/'apktool.yml').read_text()).replace('versionCode: 300','versionCode: 300'))
+(D / 'apktool.yml').write_text(re.sub(r'versionName: .*', 'versionName: "0.3-preview2"', re.sub(r'versionCode: \d+', 'versionCode: 301', (D/'apktool.yml').read_text())))
 
 a = '{http://schemas.android.com/apk/res/android}'
 ET.register_namespace('android', a[1:-1])

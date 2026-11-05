@@ -59,5 +59,5 @@ for entry in catalog['runtimes']:
         content=':'.join(identities[name]['sha256'] for name in sorted(identities) if name.startswith('libdxvk_'))
         renderers[entry['id']]=hashlib.sha256(content.encode()).hexdigest()
     else:renderers[entry['id']]=hashlib.sha256((WORK/'decoded/assets'/entry['asset']).read_bytes()).hexdigest()
-identity={'version':'0.3-preview1','base':'1.7.57','bundled_renderers':renderers,'packaged_arm64_libraries':identities,'scope':'On-disk packaged identities. Runtime patches and imported driver/renderer libraries are identified separately.'}
+identity={'version':'0.3-preview2','base':'1.7.57','bundled_renderers':renderers,'packaged_arm64_libraries':identities,'scope':'On-disk packaged identities. Runtime patches and imported driver/renderer libraries are identified separately.'}
 (WORK/'decoded/assets/xhyn-build-identity.json').write_text(json.dumps(identity,indent=2)+'\n')

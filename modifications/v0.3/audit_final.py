@@ -36,6 +36,15 @@ def inventory(archive):
 
 with zipfile.ZipFile(original) as a,zipfile.ZipFile(final) as b,final.open('rb') as stream:
     check(b.testzip() is None,'ZIP CRCs')
+    # These are raw-path resources, absent from resources.arsc. Apktool drops
+    # them on decode, yet the real Application checks every one before any UI.
+    artwork=[name for name in a.namelist() if re.fullmatch(r'res/drawable/titanium_[a-z0-9_]+\.bin',name)]
+    check(len(artwork)==146,'Exact base raw artwork inventory')
+    check(len(b.namelist())==len(set(b.namelist())),'No duplicate APK entries')
+    for name in artwork:
+        check(name in b.namelist(),'Startup artwork exists '+name)
+        check(b.read(name)==a.read(name),'Original authenticated artwork bytes '+name)
+        check(b.getinfo(name).compress_type==zipfile.ZIP_STORED,'Artwork supports openNonAssetFd '+name)
     oldlibs={n for n in a.namelist() if n.startswith('lib/') and n.endswith('.so')}
     newlibs={n for n in b.namelist() if n.startswith('lib/') and n.endswith('.so')}
     check(newlibs==oldlibs|{'lib/arm64-v8a/libxhyn_v02.so'},'Original native library set plus one own helper')
@@ -102,6 +111,11 @@ with zipfile.ZipFile(original) as a,zipfile.ZipFile(final) as b,final.open('rb')
             check(Image.alpha_composite(Image.new('RGBA',logo.size,color),logo).tobytes()==Image.alpha_composite(Image.new('RGBA',icon.size,color),icon).tobytes(),'Icon appearance '+name+str(color))
     oc,om,unused=inventory(a);nc,nm,refs=inventory(b)
     check(set(oc)<=set(nc),'All original classes retained');check(om<=nm,'All original method signatures retained')
+    def instructions(cls):
+        return {method.get_name()+method.get_descriptor():[(insn.get_name(),insn.get_output()) for insn in method.get_instructions()]
+                for method in cls.get_methods() if method.get_code()}
+    protected='Lcom/gtavsource/android/ProtectedArtwork;'
+    check(instructions(oc[protected])==instructions(nc[protected]),'Original artwork authentication code unchanged')
     # Interface-only build stubs must never replace the original implementations.
     for name in ['RuntimeConfig','GTAVActivity','GameMenuActivity','DriverManager','StableFrameProfile']:
         key='Lcom/gtavsource/android/'+name+';'
@@ -122,7 +136,7 @@ with zipfile.ZipFile(original) as a,zipfile.ZipFile(final) as b,final.open('rb')
 
 A=APK(str(original));B=APK(str(final));android='{http://schemas.android.com/apk/res/android}'
 meta={'package':B.get_package(),'label':B.get_app_name(),'version_name':B.get_androidversion_name(),'version_code':B.get_androidversion_code(),'min_sdk':B.get_min_sdk_version(),'target_sdk':B.get_target_sdk_version()}
-check(meta['package']=='com.xhynph.xhynv.reborn174' and meta['label']=='XHYN V' and meta['version_name']=='0.3-preview1' and meta['version_code']=='300','XHYN V 0.3 application identity')
+check(meta['package']=='com.xhynph.xhynv.reborn174' and meta['label']=='XHYN V' and meta['version_name']=='0.3-preview2' and meta['version_code']=='301','XHYN V 0.3 Preview 2 application identity')
 check(set(A.get_permissions())==set(B.get_permissions()),'No added Android permissions')
 check(set(A.get_activities())|{'com.gtavsource.android.XhynV02ProbeActivity'}==set(B.get_activities()),'Original launcher activities plus private probe; no standalone settings Activity')
 check(set(A.get_services())==set(B.get_services()),'Original download and diagnostic services retained')
@@ -140,7 +154,11 @@ ui_model=json.loads((R/'reports/launcher-ui-model.json').read_text())
 check(ui_model['result']=='PASS','Prepackage Android-view regression suite passed')
 check(ui_model['test_source_sha256']==digest((Path(__file__).resolve().parent/'tests/ui/LauncherUiChecks.java').read_bytes()),'UI suite matches the published test source')
 check((R/'reports/launcher-structure-checks.txt').read_text().startswith('PASS '),'Constructor and launcher-route checks passed')
-result={'result':'PASS','checks':len(checks),'file':str(final),'bytes':final.stat().st_size,'sha256':digest(final.read_bytes()),'metadata':meta,'original_classes':len(oc),'final_classes':len(nc),'original_native_libraries':len(oldlibs),'dictionary_entries':len(dictionary),'device_gameplay_tested':False,'android_ui_execution_tested':False,'host_android_view_tests':True,'physical_gpu_probe_tested':False,'scope':'Signed artifact structure, exact native modifications, preserved features, helper linkage and host/ARM64 checks; not gameplay qualification'}
+startup=json.loads((R/'apk-startup-tests/result.json').read_text())
+check(startup['result']=='PASS' and startup['apk_sha256']==digest(final.read_bytes()),'Real Application startup uses this final APK')
+check(startup['test_sha256']==digest((Path(__file__).resolve().parent/'tests/ui/ApkStartupChecks.java').read_bytes()),'Startup suite matches the published test source')
+check(startup['jvm_compatibility_source_sha256']==digest((Path(__file__).resolve().parent/'tests/ui/EnjarifyJvmCompatibility.java').read_bytes()),'Host JVM compatibility matches the executed source')
+result={'result':'PASS','checks':len(checks),'file':str(final),'bytes':final.stat().st_size,'sha256':digest(final.read_bytes()),'metadata':meta,'original_classes':len(oc),'final_classes':len(nc),'original_native_libraries':len(oldlibs),'dictionary_entries':len(dictionary),'device_gameplay_tested':False,'android_ui_execution_tested':False,'host_android_view_tests':True,'host_application_startup_tests':True,'startup_android_apis':[30,35],'physical_gpu_probe_tested':False,'scope':'Signed artifact including raw-path startup artwork, real Application and launcher startup on host Android APIs 30/35, exact native modifications, preserved features, helper linkage and host/ARM64 checks; not physical-device/gameplay qualification'}
 (R/'reports/final-audit.json').write_text(json.dumps(result,indent=2)+'\n')
 (R/'reports/final-audit-checks.txt').write_text('\n'.join(checks)+'\n')
 print(json.dumps(result,indent=2))

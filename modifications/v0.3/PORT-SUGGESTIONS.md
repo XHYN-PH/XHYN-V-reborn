@@ -23,7 +23,7 @@ these source references.
 
 ## Expanded review and implementation
 
-The [Hotfix 2 work status](../../docs/issues/0.3-preview1-work-status.md) records
+The [Hotfix 2 work status](../../docs/issues/0.2-hotfix2-work-status.md) records
 all 22 subsequent proposals and explicitly identifies unavailable engine work.
 Additional pinned implementations reviewed:
 

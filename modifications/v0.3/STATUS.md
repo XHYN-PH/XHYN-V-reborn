@@ -2,6 +2,14 @@
 
 The base is GTAV 1.7.57. Its matched engine, LAN binding, room protocol and lifecycle calls are retained. Theme stays at page 21, LAN at 22–24, and About is page 25 under System. The original application and artwork verification remain.
 
+Preview 2 repairs Preview 1's launch-blocking packaging omission: all 146 original
+raw-path artwork files are restored byte for byte and stored uncompressed before
+signing. The original Application checks them before showing any interface.
+Signed-artifact tests now execute Application startup and launcher create/resume
+on host Android APIs 30 and 35 using only the final APK's resources. The old APK
+reproduces a missing-artwork failure in that startup test. This is separate from
+the remaining native/gameplay investigations below and does not qualify devices.
+
 The base's memory controls wrote hidden DXVK_CONFIG overrides after our effective file was prepared. The duplicate controls and second writer are disabled. Memory options use the existing DXVK section/editor. Original entry points remain valid.
 
 The November 5 review selected items 1–15. Investigation does not mean every underlying native defect was repaired:

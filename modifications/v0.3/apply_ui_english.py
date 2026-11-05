@@ -76,7 +76,7 @@ a='{http://schemas.android.com/apk/res/android}';ET.register_namespace('android'
 for activity in app.findall('activity'):
  if a+'label' in activity.attrib:activity.set(a+'label',m.get(activity.get(a+'label'),activity.get(a+'label')))
 tree.write(D/'AndroidManifest.xml',encoding='utf-8',xml_declaration=True)
-(D/'apktool.yml').write_text(re.sub(r'versionName: .*', 'versionName: "0.3-preview1"', re.sub(r'versionCode: .*','versionCode: 300',(D/'apktool.yml').read_text())))
+(D/'apktool.yml').write_text(re.sub(r'versionName: .*', 'versionName: "0.3-preview2"', re.sub(r'versionCode: .*','versionCode: 301',(D/'apktool.yml').read_text())))
 report={'hooks':dict(counts),'total_presentation_hooks':sum(n for k,n in counts.items() if k in hooks),'dictionary_entries':len(m),'logo_resources':icons,'logo_sha256':hashlib.sha256(logo.read_bytes()).hexdigest(),'package':'com.xhynph.xhynv.reborn174','app_label':'XHYN V','source_methods_and_protocols_preserved':True}
 (R/'reports/ui-patch.json').write_text(json.dumps(report,indent=2)+'\n');(R/'reports/hook-targets.json').write_text(json.dumps(hooks,indent=2)+'\n');print(json.dumps({k:v for k,v in report.items() if k!='hooks'},indent=2))
 

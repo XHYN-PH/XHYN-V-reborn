@@ -144,11 +144,13 @@ def main():
     if args.verify_only:
         print('All prepackage checks passed; APK packaging and signing were not started.',flush=True)
         return
-    unsigned = work / 'XHYN-V-0.3-Preview1-unsigned.apk'
+    unsigned = work / 'XHYN-V-0.3-Preview2-unsigned.apk'
     run('package', [java, '-jar', apktool, 'b', work / 'decoded', '-p', work / 'framework', '-o', unsigned])
+    run('package-runtime-resources', [sys.executable, PACKAGE / 'package_runtime_resources.py',
+        '--input-apk', original, '--unsigned-apk', unsigned, '--report', reports / 'runtime-resources.json'])
     final = unsigned
     if signing:
-        final = work / 'XHYN-V-0.3-Preview1.apk'
+        final = work / 'XHYN-V-0.3-Preview2.apk'
         run('sign', [java, '-jar', tools / 'apksigner.jar', 'sign', '--ks', args.keystore, '--ks-key-alias', args.key_alias, '--ks-pass', 'file:' + str(args.password_file), '--v4-signing-enabled', 'false', '--alignment-preserved', 'false', '--lib-page-alignment', '16384', '--out', final, unsigned])
         signature = run('signature-verification', [java, '-jar', tools / 'apksigner.jar', 'verify', '--verbose', '--print-certs', final])
         (reports / 'signature-verification.txt').write_text(signature)
@@ -157,6 +159,10 @@ def main():
     env['XHYN_OUTPUT_APK'] = str(final)
     # apksigner supplies final alignment. The complete APK audit runs on signed builds.
     if signing:
+        run('apk-startup', [sys.executable, PACKAGE / 'tests/run_apk_startup.py', '--apk', final,
+            '--output-dir', work / 'apk-startup-tests', '--tools-dir', tools,
+            '--classpath-file', args.ui_classpath_file.resolve(strict=True),
+            '--enjarify-root', args.enjarify_root.resolve(strict=True)])
         run('final-audit', [sys.executable, PACKAGE / 'audit_final.py'])
     (work / 'SHA256SUMS.txt').write_text(digest(final) + '  ' + final.name + '\n')
     print('Built ' + str(final), flush=True)
