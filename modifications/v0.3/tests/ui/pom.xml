@@ -1,0 +1,9 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>xhyn</groupId><artifactId>launcher-ui-checks</artifactId><version>0.2-hotfix1</version>
+  <repositories><repository><id>google</id><url>https://maven.google.com</url></repository></repositories>
+  <dependencies>
+    <dependency><groupId>org.robolectric</groupId><artifactId>robolectric</artifactId><version>4.14.1</version></dependency>
+    <dependency><groupId>junit</groupId><artifactId>junit</artifactId><version>4.13.2</version></dependency>
+  </dependencies>
+</project>

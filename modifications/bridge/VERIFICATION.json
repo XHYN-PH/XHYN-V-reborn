@@ -1,0 +1,23 @@
+{
+  "result": "PASS",
+  "checks": 40,
+  "file": "XHYN-V-Bridge-0.1.0.apk",
+  "sha256": "643457a8267c993f190ea17dfb350e075f93c88455a3770c57b96f82c3a9b3ce",
+  "bytes": 69200210,
+  "package": "com.xhynph.xhynv.bridge",
+  "version": "0.1.0",
+  "native_library_sha256": {
+    "lib/arm64-v8a/libapp.so": "1766b8044c6bd36ce632293428107ef08668dabf6e8fbe4cec16d143ccaa2857",
+    "lib/arm64-v8a/libdatastore_shared_counter.so": "d3e48717c9aa147e0ab21063ba0e8e0211cabf8bf40b222640829519edbf58e1",
+    "lib/arm64-v8a/libflutter.so": "ff60911a10d881d7211bb7e6135159c6ddc90d18e6c177eea60bb3fe797b2888",
+    "lib/arm64-v8a/libisar.so": "a6d15c944bcc10f203ccc48181f894979228b78d6c25652b427948bb32ca47bf",
+    "lib/arm64-v8a/librust_lib_astral.so": "3118840bf8c9806375aefdd11262e26083fad648e797d5928210590825ba4210"
+  },
+  "physical_vpn_tested": false,
+  "two_device_gameplay_tested": false,
+  "scope": "Signed artifact identity, native/backend preservation, receiver links and packaged English assets; not a live connectivity test",
+  "flutter_analysis": "No issues found",
+  "flutter_tests": 7,
+  "test_source_sha256": "da9401d900836e005edf64d237956671a56babbb9e18202ad208d56075d29a78",
+  "patch_sha256": "455052e54ddcc9a4f1055c84e2c9ef443fd40adc2fcf4b2603579bcc44b28f08"
+}

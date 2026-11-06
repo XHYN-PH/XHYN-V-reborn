@@ -3,3 +3,8 @@
 /releases/** export-ignore
 /releases/**/*.apk binary
 /releases/**/*.zip binary
+
+# Preserve exact upstream notice/reference bytes and patch payloads.
+modifications/bridge/UPSTREAM-NOTICES.txt -text -whitespace linguist-vendored
+modifications/bridge/bridge.patch -text -whitespace linguist-generated
+modifications/v0.3/tests/reference/gplall-headers/sources/gplall/** -text -whitespace linguist-vendored

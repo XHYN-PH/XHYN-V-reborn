@@ -1,0 +1,58 @@
+{
+  "result": "PASS",
+  "checks": 9664,
+  "file": "XHYN-V-0.3-Preview2.apk",
+  "bytes": 103337431,
+  "sha256": "a681765d9aae1404c59e3570682f3078bf9062ff800abfc7c5e1972f2783309f",
+  "metadata": {
+    "package": "com.xhynph.xhynv.reborn174",
+    "label": "XHYN V",
+    "version_name": "0.3-preview2",
+    "version_code": "301",
+    "min_sdk": "30",
+    "target_sdk": "36"
+  },
+  "original_classes": 3400,
+  "final_classes": 3504,
+  "original_native_libraries": 26,
+  "dictionary_entries": 5304,
+  "device_gameplay_tested": false,
+  "android_ui_execution_tested": false,
+  "host_android_view_tests": true,
+  "host_application_startup_tests": true,
+  "startup_android_apis": [
+    30,
+    35
+  ],
+  "physical_gpu_probe_tested": false,
+  "scope": "Signed artifact including raw-path startup artwork, real Application and launcher startup on host Android APIs 30/35, exact native modifications, preserved features, helper linkage and host/ARM64 checks; not physical-device/gameplay qualification",
+  "source_tests": {
+    "launcher_android_view_tests": 34,
+    "english_checks": 8492,
+    "graphics_host_checks": 116,
+    "driver_host_checks": 10,
+    "log_and_comparison_checks": 18,
+    "advice_checks": 16,
+    "native_guard_cases": 57,
+    "observer_abi_cases": 26,
+    "native_component_host_checks": 70,
+    "asan_ubsan_checks": 70,
+    "signed_apk_startup_tests": 6,
+    "configuration_policy_checks": 319,
+    "native_config_parser_checks": 33
+  },
+  "startup_suite": {
+    "result": "PASS",
+    "apk_sha256": "a681765d9aae1404c59e3570682f3078bf9062ff800abfc7c5e1972f2783309f",
+    "test_sha256": "89765c02917b07ff4d2348fc263e6070b766ca6d6fc7d378db5a400bcadac252",
+    "jvm_compatibility_source_sha256": "e8385efe9d1c7875560ae9efb20e4483f2c49fe2c7ef2bee7da520557cffbf98",
+    "android_apis": [
+      30,
+      35
+    ],
+    "tests": 6,
+    "jvm_only_adjustments": "Static-interface references and stack maps corrected in the translated host JAR; original default no-op interface versions adjusted. APK DEX is unchanged.",
+    "scope": "Actual final APK Application.onCreate, artwork authentication/render, dictionary and launcher lifecycle; host Android APIs 30/35, not physical gameplay"
+  },
+  "negative_regression": "Published Preview 1 fails the same final startup suite with FileNotFoundException for raw-path artwork; verification is not disabled."
+}

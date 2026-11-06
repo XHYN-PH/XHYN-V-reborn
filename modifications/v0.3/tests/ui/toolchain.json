@@ -1,0 +1,11 @@
+{
+  "robolectric": "4.14.1",
+  "junit": "4.13.2",
+  "android_api": 30,
+  "enjarify": {
+    "revision": "6364dfb30f7862873b84ec5fad1d1286c526ba0b",
+    "archive_url": "https://codeload.github.com/Storyyeller/enjarify/zip/6364dfb30f7862873b84ec5fad1d1286c526ba0b",
+    "archive_sha256": "090b26b33a5d598158b867d2e9e8216b91967dfdc8ac4e91feab16b9cad38d9b",
+    "python_sources_digest": "d4b4987bcac9e7c6f7558ba5a42e12bd9d57a6f67cd9699bcada1683a0a1169d"
+  }
+}

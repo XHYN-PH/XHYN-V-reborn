@@ -1,0 +1,27 @@
+{
+  "app": "XHYN V Bridge",
+  "version": "0.1.0+1",
+  "application_id": "com.xhynph.xhynv.bridge",
+  "upstream": {
+    "repository": "https://github.com/ldoubil/astral",
+    "tag": "v2.9.60",
+    "commit": "3f498747ffcc8b16f9fe62b94e2824fb924376d9"
+  },
+  "input_apk_sha256": "fbe700940085f07fa0a977077712f70105e6ec6cdbb2bc8bc8f6bc93c95160a8",
+  "native_backend_sha256": "3118840bf8c9806375aefdd11262e26083fad648e797d5928210590825ba4210",
+  "rust_content_hash": -2101453571,
+  "flutter": "3.38.4",
+  "flutter_commit": "66dd93f9a27ffe2a9bfc8297506ce066ff51265f",
+  "flutter_rust_bridge": "2.12.0",
+  "agp": "8.11.1",
+  "kotlin": "2.2.20",
+  "ndk": "28.2.13676358",
+  "abi": "arm64-v8a",
+  "license": "PolyForm Noncommercial 1.0.0; original required notice retained",
+  "widget_versions": {
+    "glance": "1.1.1",
+    "workmanager": "2.11.2",
+    "coroutines": "1.10.2",
+    "window": "1.2.0"
+  }
+}

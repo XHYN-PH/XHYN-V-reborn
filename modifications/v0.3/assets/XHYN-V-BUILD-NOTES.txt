@@ -1,0 +1,9 @@
+XHYN V 0.2
+Maintained by XHYN
+
+ARM64 Android engine with DXVK graphics translation. This APK does not bundle GTA V game data. Use your own compatible Legacy files.
+
+Performance and driver controls are in the launcher. Driver readiness checks draw and present a small test; passing does not establish game compatibility.
+
+Third-party credits and licenses remain applicable.
+https://github.com/XHYN-PH/XHYN-V-reborn
