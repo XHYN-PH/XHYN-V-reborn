@@ -163,8 +163,24 @@ public class LauncherUiChecks {
         XhynV02Runtime.configure(activity,activity.config);assertArrayEquals(original,Files.readAllBytes(saved.toPath()));
     }
     @Test public void setupFailureIsNotMisreportedAsAnInvalidFolder() {
-        assertEquals("Graphics setup failed",XhynV02Runtime.launchFailureTitle(new XhynV02Runtime.LaunchSetupFailure("bad config",new IOException())));
-        assertEquals("Invalid game folder",XhynV02Runtime.launchFailureTitle(new IllegalArgumentException("bad path")));
+        XhynV02Launch.begin(activity);
+        assertEquals("Graphics setup failed",XhynV02Runtime.launchFailureTitle(activity,new XhynV02Runtime.LaunchSetupFailure("bad config",new IOException())));
+        assertEquals("Invalid game folder",XhynV02Runtime.launchFailureTitle(activity,new IllegalArgumentException("bad path")));
+        XhynV02Launch.record(activity,new RuntimeException("later error"),"Loading libraries");
+        assertTrue(XhynV02Launch.failedBeforeSession(XhynV02Launch.read(activity)));
+        assertTrue(XhynV02Runtime.userSummary(activity).contains("bad path"));
+        assertFalse(XhynV02Runtime.userSummary(activity).contains("later error"));
+    }
+    @Test public void oneTimeDxvkRetryReturnsToSavedSettings() throws Exception {
+        File saved=XhynV02Runtime.saved(activity.config);
+        String original="dxvk.numCompilerThreads = 3\n";
+        XhynV02Config.write(saved,original);
+        XhynV02Runtime.skipDxvkOverridesOnce(activity,activity.config.root);
+        XhynV02Runtime.configure(activity,activity.config);
+        assertFalse(XhynV02Config.read(XhynV02Runtime.effective(activity)).contains("dxvk.numCompilerThreads = 3"));
+        assertEquals(original,XhynV02Config.read(saved));
+        XhynV02Runtime.configure(activity,activity.config);
+        assertEquals("3",XhynV02Config.globals(XhynV02Config.read(XhynV02Runtime.effective(activity))).get("dxvk.numCompilerThreads"));
     }
     @Test public void nativeSwitchStylePersistsAndSynchronizesLauncherConfiguration(){
         page(1);TextView label=find(activity.content,"Turnip One UI workaround");View row=(View)label.getParent();while(!row.isClickable())row=(View)row.getParent();row.performClick();

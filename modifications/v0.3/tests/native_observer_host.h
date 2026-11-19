@@ -66,6 +66,7 @@ static int observer_checks(const char *directory){
     Java_com_gtavsource_android_XhynV02Native_paused(&environment,NULL,JNI_TRUE);uint64_t recorded=obs_stats.interval_count;present_a(qa,&pi);assert(obs_stats.interval_count==recorded);++checks;
     Java_com_gtavsource_android_XhynV02Native_paused(&environment,NULL,JNI_FALSE);present_a(qa,&pi);assert(obs_stats.interval_count==recorded);++checks;
     om_result=VK_ERROR_DEVICE_LOST;assert(present_a(qa,&pi)==om_result);assert(obs_stats.device_losses==1&&obs_stats.present_errors==1);checks+=2;om_result=VK_SUCCESS;
+    assert(obs_stats.capture_presents==3);++checks;
     VkSubmitInfo submit={.sType=VK_STRUCTURE_TYPE_SUBMIT_INFO,.commandBufferCount=2};assert(((PFN_vkQueueSubmit)get(a,"vkQueueSubmit"))(qa,1,&submit,(VkFence)(uintptr_t)55)==VK_SUCCESS);
     VkSubmitInfo2 submit2={.sType=VK_STRUCTURE_TYPE_SUBMIT_INFO_2,.commandBufferInfoCount=3};assert(((PFN_vkQueueSubmit2)get(b,"vkQueueSubmit2KHR"))(qb,1,&submit2,(VkFence)(uintptr_t)55)==VK_SUCCESS);assert(obs_stats.submits==2&&obs_stats.command_buffers==5);checks+=3;
     assert(((PFN_vkCreateGraphicsPipelines)get(a,"vkCreateGraphicsPipelines"))(a,(VkPipelineCache)(uintptr_t)99,2,NULL,om_allocator,NULL)==VK_SUCCESS);
@@ -73,6 +74,7 @@ static int observer_checks(const char *directory){
     VkSwapchainCreateInfoKHR si={.sType=VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,.imageExtent={1280,720}};VkSwapchainKHR swap;
     assert(((PFN_vkCreateSwapchainKHR)get(a,"vkCreateSwapchainKHR"))(a,&si,om_allocator,&swap)==VK_SUCCESS);((PFN_vkDestroySwapchainKHR)get(a,"vkDestroySwapchainKHR"))(a,swap,om_allocator);assert(obs_stats.swapchains==1&&obs_queues[0].last_present==0);checks+=2;
     char report[4096];obs_snapshot(report,sizeof(report));assert(strstr(report,"\"deviceLocalBudgetBytes\":4000000000")&&strstr(report,"\"deviceLocalUsageBytes\":2000000000")&&strstr(report,"\"allocationFailures\":1"));++checks;
+    assert(strstr(report,"\"recordingSuccessfulPresents\":3")&&strstr(report,"\"presentIntervalP50Ns\":"));++checks;
     char path[PATH_MAX];snprintf(path,sizeof(path),"%s/observer-metrics.json",directory);FILE *file=fopen(path,"wb");assert(file);fwrite(report,1,strlen(report),file);fclose(file);
     struct om_work work={a,alloc_a,free_a};pthread_t workers[8];
     for(unsigned n=0;n<8;n++)assert(!pthread_create(&workers[n],NULL,om_allocations_thread,&work));

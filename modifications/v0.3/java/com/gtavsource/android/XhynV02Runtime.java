@@ -22,7 +22,9 @@ public final class XhynV02Runtime {
     public static final class LaunchSetupFailure extends RuntimeException {
         LaunchSetupFailure(String message, Throwable cause) { super(message,cause); }
     }
-    public static String launchFailureTitle(RuntimeException failure) {
+    public static String launchFailureTitle(Context context, RuntimeException failure) {
+        if (failure != null && !(failure instanceof LaunchSetupFailure))
+            XhynV02Launch.record(context,failure,"Checking the game folder");
         return failure instanceof LaunchSetupFailure ? "Graphics setup failed" : "Invalid game folder";
     }
     private static volatile File session;
@@ -160,8 +162,12 @@ public final class XhynV02Runtime {
     }
 
     public static void configure(Activity activity, RuntimeConfig cfg) {
+        XhynV02Launch.phase(activity,"Preparing graphics settings");
         try {
-            activity.getSharedPreferences("xhyn-v02", 0).edit().putString("gameRoot", cfg.root.getPath()).apply();
+            android.content.SharedPreferences prefs=activity.getSharedPreferences("xhyn-v02",0);
+            String configuredRoot=cfg.root.getAbsolutePath();
+            boolean skipOverrides=configuredRoot.equals(prefs.getString("skipDxvkOverridesOnce",""));
+            prefs.edit().putString("gameRoot",cfg.root.getPath()).remove("skipDxvkOverridesOnce").apply();
             // Existing imported drivers must not become unusable merely because a new,
             // optional readiness test has no saved result. DriverPackage still validates loading.
             // Old builds used this filename. Migrate once and never overwrite saved edits.
@@ -173,7 +179,7 @@ public final class XhynV02Runtime {
                 warning="The old dxvk.conf could not be imported: "+invalidLegacy.getMessage()+". The original file has been kept.";
             }
             String text;
-            try { text=preview(activity,cfg,true); }
+            try { text=preview(activity,cfg,!skipOverrides); }
             catch(IOException invalidOverrides) {
                 warning+=(warning.isEmpty()?"":"\n")+"Saved dxvk.conf overrides could not be applied: "+invalidOverrides.getMessage()+". Managed settings are used for this launch; your saved text has been kept.";
                 text=preview(activity,cfg,false);
@@ -206,12 +212,13 @@ public final class XhynV02Runtime {
                 applied=false;
                 warning+=(warning.isEmpty()?"":"\n")+"Graphics overrides were not applied: "+invalidOverrides.getMessage()+". The game's settings file was left intact.";
             }
-            begin(activity, cfg, text, cache, applied);
+            begin(activity, cfg, text, cache, applied,skipOverrides);
             if(!warning.isEmpty()) {
                 XhynV02Config.write(new File(session,"setup-warning.txt"),warning);
                 activity.runOnUiThread(()->android.widget.Toast.makeText(activity,"Some graphics overrides could not be applied. See Diagnostics for details.",android.widget.Toast.LENGTH_LONG).show());
             }
         } catch (Exception failure) {
+            XhynV02Launch.record(activity,failure,"Graphics settings preparation");
             try {
                 java.io.StringWriter detail=new java.io.StringWriter();failure.printStackTrace(new java.io.PrintWriter(detail));
                 JSONObject report=new JSONObject().put("time_ms",System.currentTimeMillis()).put("pid",android.os.Process.myPid()).put("gameRoot",cfg.root.getPath()).put("message",failure.toString()).put("stack",detail.toString());
@@ -221,6 +228,11 @@ public final class XhynV02Runtime {
         }
     }
 
+    public static void skipDxvkOverridesOnce(Context context, File root) {
+        context.getSharedPreferences("xhyn-v02",0).edit()
+                .putString("skipDxvkOverridesOnce",root.getAbsolutePath()).apply();
+    }
+
     private static String rendererHash(RuntimeConfig cfg) throws Exception {
         if (!"custom".equals(cfg.get("dxvk", "source", "builtin"))) return "builtin";
         File file = new File(cfg.dxvk, cfg.get("dxvk", "package_zip", ""));
@@ -228,7 +240,7 @@ public final class XhynV02Runtime {
         return hash(file);
     }
 
-    private static void begin(Context context, RuntimeConfig cfg, String text, File cache, boolean graphicsApplied) throws Exception {
+    private static void begin(Context context, RuntimeConfig cfg, String text, File cache, boolean graphicsApplied, boolean skipOverrides) throws Exception {
         sessionId = System.currentTimeMillis() + "-" + android.os.Process.myPid() + "-" + UUID.randomUUID().toString().substring(0, 8);
         session = new File(context.getFilesDir(), "xhyn-sessions/" + sessionId);
         if (!session.mkdirs()) throw new IOException("Cannot create session report");
@@ -238,13 +250,21 @@ public final class XhynV02Runtime {
             for (int i = 0; i < old.length - 8; i++) removeTree(old[i], sessions);
         }
         JSONObject details = new JSONObject();
+        Map<String,String> options=XhynV02Config.globals(text);
+        boolean frameGeneration=StableFrameProfile.framegen(cfg);
+        String renderCap=options.getOrDefault("dxvk.maxFrameRate",
+                options.getOrDefault("dxgi.maxFrameRate",Integer.toString(frameLimit(cfg))));
         details.put("session", sessionId).put("pid", android.os.Process.myPid()).put("start_ms", System.currentTimeMillis())
-                .put("version", "0.3-preview2").put("fingerprint", Build.FINGERPRINT).put("model", Build.MANUFACTURER + " " + Build.MODEL)
+                .put("version", context.getPackageManager().getPackageInfo(context.getPackageName(),0).versionName)
+                .put("fingerprint", Build.FINGERPRINT).put("model", Build.MANUFACTURER + " " + Build.MODEL)
                 .put("requested_driver", driverKey(cfg)).put("renderer_source", cfg.get("dxvk", "source", "builtin"))
                 .put("renderer_id", rendererId(context,cfg)).put("renderer_zip_hash", rendererHash(cfg)).put("renderer_cache_identity",rendererCacheIdentity(context,cfg))
                 .put("cache", cache.getAbsolutePath()).put("graphics_applied", graphicsApplied)
+                .put("skipped_saved_dxvk_once",skipOverrides)
                 .put("recording_requested",cfg.getBoolean("performance","capture",false))
-                .put("frame_generation",StableFrameProfile.framegen(cfg)).put("performance_hints",cfg.getBoolean("xhyn","performance_hints",false))
+                .put("frame_generation",frameGeneration).put("render_fps_cap",renderCap)
+                .put("generated_output_target",frameGeneration?StableFrameProfile.target(cfg):0)
+                .put("performance_hints",cfg.getBoolean("xhyn","performance_hints",false))
                 .put("scope", "Current attempt only; a prior driver probe is a separate record");
         XhynV02Config.write(new File(session, "session.json"), details.toString(2));
         try(InputStream input=context.getAssets().open("xhyn-build-identity.json")){
@@ -276,10 +296,12 @@ public final class XhynV02Runtime {
         XhynV02Config.write(new File(session,"log-start.json"),logs.toString(2));
         XhynV02Config.write(new File(session,"game-root.txt"),cfg.root.getCanonicalPath());
         context.getSharedPreferences("xhyn-v02", 0).edit().putString("lastSession", sessionId).apply();
+        XhynV02Launch.bind(context,sessionId,session);
         if (cfg.getBoolean("performance", "capture", false)) startCapture(context.getApplicationContext(), cfg);
     }
 
     public static void librariesLoaded(Activity activity) {
+        XhynV02Launch.phase(activity,"Game libraries loaded");
         try {
             if (sessionId == null) throw new IOException("Session was not initialized");
             if (!"".equals(Os.getenv("DXVK_CONFIG")) || !effective(activity).getAbsolutePath().equals(Os.getenv("DXVK_CONFIG_FILE"))
@@ -328,6 +350,9 @@ public final class XhynV02Runtime {
             final File output = new File(captureDirectory, "memory.csv");
             XhynV02Config.write(output, "elapsed_ms,pss_kib,java_used_bytes,native_heap_bytes,thermal_status,process_read_bytes,process_write_bytes,system_available_ram_bytes,system_total_ram_bytes,system_low_memory\n");
             final long start = android.os.SystemClock.elapsedRealtime();
+            final boolean[] firstPresent={true};
+            final android.hardware.display.DisplayManager displays=
+                    (android.hardware.display.DisplayManager)context.getSystemService(Context.DISPLAY_SERVICE);
             capture = Executors.newSingleThreadScheduledExecutor(r -> new Thread(r, "xhyn-bounded-capture"));
             context.getSharedPreferences("xhyn-v02", 0).edit().putBoolean("captureActive", true).apply();
             capture.scheduleAtFixedRate(() -> {
@@ -346,6 +371,18 @@ public final class XhynV02Runtime {
                     try{
                         XhynV02Config.write(new File(captureDirectory,"driver-runtime-latest.txt"),"Runtime snapshot, elapsed_ms="+(android.os.SystemClock.elapsedRealtime()-start)+"\n"+DriverManager.runtimeDiagnostics());
                         JSONObject graphics=new JSONObject(XhynV02Native.metrics());graphics.put("elapsed_ms",android.os.SystemClock.elapsedRealtime()-start).put("performanceHints",XhynV02FrameHints.status());
+                        android.view.Display screen=displays==null?null:displays.getDisplay(android.view.Display.DEFAULT_DISPLAY);
+                        if(screen!=null) {
+                            float refresh=screen.getRefreshRate();
+                            if(Float.isFinite(refresh) && refresh>0) graphics.put("displayRefreshHz",refresh);
+                        }
+                        if(firstPresent[0] && graphics.optLong("recordingSuccessfulPresents")>0){
+                            synchronized(LOCK) {
+                                if(generation==captureGeneration)
+                                    XhynV02Launch.phase(context,"First presentation observed");
+                            }
+                            firstPresent[0]=false;
+                        }
                         XhynV02Config.write(new File(captureDirectory,"graphics-metrics.json"),graphics.toString(2));
                     }catch(LinkageError|RuntimeException unavailable){Log.w("XHYN V","Optional graphics measurements unavailable",unavailable);}
                 } catch (Exception failure) { Log.w("XHYN V", "Capture stopped", failure); stopCapture(cfg.root,generation); }
@@ -404,11 +441,21 @@ public final class XhynV02Runtime {
             String last=context.getSharedPreferences("xhyn-v02",0).getString("lastSession","");
             String notice=last.matches("[A-Za-z0-9-]{1,100}")?XhynV02Config.read(new File(context.getFilesDir(),"xhyn-sessions/"+last+"/setup-warning.txt")):"";
             String value=XhynV02Config.read(new File(context.getFilesDir(),"xhyn-launch-error.json"));
-            return (notice.isEmpty()?"":"Latest session settings notice:\n"+notice+"\n\n")+(value.isEmpty()?"No startup setup error has been recorded.":"Last startup error (see its timestamp):\n"+value);
+            JSONObject launch=XhynV02Launch.read(context);
+            String stage=launch.optString("last_phase","");
+            return (stage.isEmpty()?"":"Last launch stage: "+stage+"\n\n")
+                    +(notice.isEmpty()?"":"Latest session settings notice:\n"+notice+"\n\n")
+                    +(value.isEmpty()?"No startup setup error has been recorded.":"Last startup error (see its timestamp):\n"+value);
         }
         catch(Exception error){return "Could not read the startup report: "+error.getMessage();}
     }
     public static String userSummary(Context context){
+        JSONObject launch=XhynV02Launch.read(context);
+        JSONObject first=launch.optJSONObject("first_error");
+        if(first!=null) {
+            String phase=first.optString("phase","Startup");
+            return phase+" failed.\n"+first.optString("message","Open technical details for the startup error.");
+        }
         String source=lastError(context)+"\n"+startupError(context);
         String id=context.getSharedPreferences("xhyn-v02",0).getString("lastSession","");
         if(id.matches("[A-Za-z0-9-]{1,100}"))try{
@@ -420,7 +467,8 @@ public final class XhynV02Runtime {
             if(metrics.optLong("deviceLossObservations")>0)source+="\nVK_ERROR_DEVICE_LOST";
             else if(metrics.optLong("allocationFailures")>0)source+="\nallocation failed";
         }catch(Exception unavailable){}
-        return XhynV02Advice.explain(source);
+        String stage=launch.optString("last_phase","");
+        return XhynV02Advice.explain(source)+(stage.isEmpty()?"":"\n\nLast launch stage: "+stage+".");
     }
     private static void lifecycle(String event){
         File report=session;if(report==null)return;

@@ -24,21 +24,34 @@ public final class XhynV02Display {
     }
     public static void apply(Activity activity){
         try{
-            RuntimeConfig cfg=XhynV02Runtime.config();if(!cfg.getBoolean("xhyn","match_refresh",true))return;
+            RuntimeConfig cfg=XhynV02Runtime.config();
+            if(!cfg.getBoolean("xhyn","match_refresh",true)){release(activity);return;}
             int target=StableFrameProfile.framegen(cfg)?StableFrameProfile.target(cfg):XhynV02Runtime.effectiveFrameLimit(activity,cfg);
-            if(target<=0)return; // Unlimited retains the user's current display policy.
+            if(target<=0){release(activity);return;}
             Display display=activity.getWindowManager().getDefaultDisplay();if(display==null)return;
             Display.Mode current=display.getMode();Display.Mode[] modes=display.getSupportedModes();
             float[] rates=new float[modes.length];for(int i=0;i<modes.length;i++)if(modes[i].getPhysicalWidth()==current.getPhysicalWidth()&&modes[i].getPhysicalHeight()==current.getPhysicalHeight())rates[i]=modes[i].getRefreshRate();
             int index=choose(rates,target);if(index>=0){WindowManager.LayoutParams attributes=activity.getWindow().getAttributes();
-                if(!previous.containsKey(activity))previous.put(activity,attributes.preferredDisplayModeId);
-                if(attributes.preferredDisplayModeId!=modes[index].getModeId()){attributes.preferredDisplayModeId=modes[index].getModeId();activity.getWindow().setAttributes(attributes);}}
+                if(attributes.preferredDisplayModeId!=modes[index].getModeId()){
+                    previous.putIfAbsent(activity,attributes.preferredDisplayModeId);
+                    attributes.preferredDisplayModeId=modes[index].getModeId();
+                    activity.getWindow().setAttributes(attributes);
+                }}
             surface(activity.getWindow().getDecorView(),target);
         }catch(Exception|LinkageError ignored){/* Display requests are best effort, never launch requirements. */}
     }
     private static void surface(View view,int target){
         if(view instanceof SurfaceView){Surface value=((SurfaceView)view).getHolder().getSurface();
-            if(value!=null&&value.isValid()&&!Integer.valueOf(target).equals(requests.get(value))){value.setFrameRate(target,Surface.FRAME_RATE_COMPATIBILITY_DEFAULT);requests.put(value,target);}}
+            if(value!=null&&value.isValid()){
+                Integer requested=requests.get(value);
+                if(target==0&&requested!=null){
+                    value.setFrameRate(0,Surface.FRAME_RATE_COMPATIBILITY_DEFAULT);
+                    requests.remove(value);
+                }else if(target>0&&!Integer.valueOf(target).equals(requested)){
+                    value.setFrameRate(target,Surface.FRAME_RATE_COMPATIBILITY_DEFAULT);
+                    requests.put(value,target);
+                }
+            }}
         if(view instanceof ViewGroup){ViewGroup group=(ViewGroup)view;for(int i=0;i<group.getChildCount();i++)surface(group.getChildAt(i),target);}
     }
     public static void release(Activity activity){

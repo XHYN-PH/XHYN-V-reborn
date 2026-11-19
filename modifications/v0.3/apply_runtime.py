@@ -77,11 +77,41 @@ method('DriverManager', 'prepare(Landroid/content/Context;Lcom/gtavsource/androi
 method('DriverPackage', 'prepare(Ljava/io/File;Ljava/lang/String;Ljava/io/File;I)Lcom/gtavsource/android/DriverPackage;', lambda s: re.sub(r'(    \.locals \d+\n)', r'\1\n    invoke-static/range {p0 .. p3}, Lcom/gtavsource/android/XhynV02DriverPackage;->checkPrepare(Ljava/io/File;Ljava/lang/String;Ljava/io/File;I)V\n', s, count=1))
 
 method('GTAVActivity', 'loadLibraries()V', lambda s: s.replace('    invoke-static {p0, v0}, Lcom/gtavsource/android/DxvkManager;->initialize(Landroid/content/Context;Lcom/gtavsource/android/RuntimeConfig;)V', '    invoke-static {p0, v0}, Lcom/gtavsource/android/DxvkManager;->initialize(Landroid/content/Context;Lcom/gtavsource/android/RuntimeConfig;)V\n\n    invoke-static {p0}, Lcom/gtavsource/android/XhynV02Runtime;->librariesLoaded(Landroid/app/Activity;)V'))
+# Preserve first-attempt errors even when SDL catches a later failure itself.
+method('GTAVActivity','onCreate(Landroid/os/Bundle;)V',lambda s:s.replace('    .locals 3\n','    .locals 3\n    invoke-static {p0}, Lcom/gtavsource/android/XhynV02Launch;->begin(Landroid/content/Context;)V\n',1))
+def record_load_failure(old):
+    original=old.replace(' loadLibraries()V',' xhynOriginalLoadLibraries()V',1)
+    return original+'''
+
+.method public loadLibraries()V
+    .locals 2
+    :xhyn_load_start
+    invoke-virtual {p0}, Lcom/gtavsource/android/GTAVActivity;->xhynOriginalLoadLibraries()V
+    :xhyn_load_end
+    .catch Ljava/lang/LinkageError; {:xhyn_load_start .. :xhyn_load_end} :xhyn_load_failed
+    .catch Ljava/lang/RuntimeException; {:xhyn_load_start .. :xhyn_load_end} :xhyn_load_failed
+    return-void
+    :xhyn_load_failed
+    move-exception v0
+    const-string v1, "Game libraries or renderer initialization"
+    invoke-static {p0, v0, v1}, Lcom/gtavsource/android/XhynV02Launch;->record(Landroid/content/Context;Ljava/lang/Throwable;Ljava/lang/String;)V
+    throw v0
+.end method'''
+method('GTAVActivity','loadLibraries()V',record_load_failure)
+# The base sets mActivityCreated before its fallible library load. Retrying can
+# therefore reach nativeAllowRecreateActivity with no SDL native registration.
+# Load only SDL core before that branch, using its original contextual loader.
+_sdl=next(D.glob('smali*/org/libsdl/app/SDLActivity.smali'))
+_sdl_text=_sdl.read_text()
+_sdl_marker='    invoke-super {p0, p1}, Landroid/app/Activity;->onCreate(Landroid/os/Bundle;)V'
+assert _sdl_text.count(_sdl_marker)==1
+_sdl.write_text(_sdl_text.replace(_sdl_marker,_sdl_marker+'\n\n    invoke-static {p0}, Lcom/gtavsource/android/XhynV02Sdl;->beforeCreate(Landroid/content/Context;)V',1))
+changes.append('org.libsdl.app.SDLActivity->onCreate: SDL core before native recreation query')
 def startup_title(old):
     marker='    const-string v0, "\\u6e38\\u620f\\u76ee\\u5f55\\u65e0\\u6548"'
     assert old.count(marker)==1
     return old.replace(marker,'''    iget-object v0, p0, Lcom/gtavsource/android/GTAVActivity;->launchPathFailure:Ljava/lang/RuntimeException;
-    invoke-static {v0}, Lcom/gtavsource/android/XhynV02Runtime;->launchFailureTitle(Ljava/lang/RuntimeException;)Ljava/lang/String;
+    invoke-static {p0, v0}, Lcom/gtavsource/android/XhynV02Runtime;->launchFailureTitle(Landroid/content/Context;Ljava/lang/RuntimeException;)Ljava/lang/String;
     move-result-object v0''',1)
 # This base reports every preparation RuntimeException as a folder failure.
 # Keep actual path validation, while naming our graphics/config failures correctly.
@@ -192,7 +222,10 @@ for line in s.splitlines():
     lines.append(line)
 assert next(comments, None) is None
 ini.write_text('\n'.join(lines) + '\n')
-(D / 'apktool.yml').write_text(re.sub(r'versionName: .*', 'versionName: "0.3-preview2"', re.sub(r'versionCode: \d+', 'versionCode: 301', (D/'apktool.yml').read_text())))
+scope = json.loads((PACKAGE / 'scope.json').read_text())
+apktool_config = D / 'apktool.yml'
+stamp = re.sub(r'versionName: .*', 'versionName: ' + json.dumps(scope['release']), apktool_config.read_text())
+apktool_config.write_text(re.sub(r'versionCode: .*', 'versionCode: ' + str(scope['versionCode']), stamp))
 
 a = '{http://schemas.android.com/apk/res/android}'
 ET.register_namespace('android', a[1:-1])

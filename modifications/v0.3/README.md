@@ -2,7 +2,7 @@
 
 Java interface/configuration helpers, a C reporting/probe helper, shaders,
 translations, guarded binary patches, the complete build driver and tests for
-version 0.3 Preview 2. See [scope](scope.json), [implementation status](STATUS.md) and
+version 0.3 Preview 3. See [scope](scope.json), [implementation status](STATUS.md) and
 [provenance](PROVENANCE.md). Original engine/launcher code is a separate input.
 
 The About page inside System, directly below Game Resources, uses the links in `XhynV02Menu.java`. The original

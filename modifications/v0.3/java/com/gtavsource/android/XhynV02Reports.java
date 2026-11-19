@@ -13,6 +13,15 @@ public final class XhynV02Reports {
     public static final Set<String> OWNED_LOGS=Collections.unmodifiableSet(new HashSet<>(Arrays.asList("Config/driver-status.txt","Config/dxvk-status.txt","gtav_tty.log","gtav_last_error.log","gtav_error_pending.txt","gtav_exit_info.log","gtav_resource_errors.log")));
     public static String make(Context context) throws Exception {
         String id = context.getSharedPreferences("xhyn-v02", 0).getString("lastSession", "");
+        org.json.JSONObject launch=XhynV02Launch.read(context);
+        if (XhynV02Launch.failedBeforeSession(launch)) {
+            File out=new File(context.getCacheDir(),"xhyn-last-session.zip");
+            try(ZipOutputStream zip=new ZipOutputStream(new FileOutputStream(out))){
+                addText(zip,"README.txt","The latest launch stopped before a game session was created.\n");
+                addText(zip,"java-launch.json",launch.toString(2));
+            }
+            return out.getAbsolutePath();
+        }
         if (!id.matches("[A-Za-z0-9-]{1,100}")) {
             File startup=new File(context.getFilesDir(),"xhyn-launch-error.json");
             if(!startup.isFile())throw new IOException("No report is ready yet. Turn on Record next game, start the game and reproduce the problem, then return here to save the report.");

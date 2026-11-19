@@ -23,7 +23,8 @@ struct obs_allocation { VkDevice device; VkDeviceMemory memory; uint64_t bytes; 
 struct obs_totals { uint64_t live, peak, allocations, frees, failed, untracked,
     presents, present_errors, submits, command_buffers, graphics, compute,
     pipeline_ns, swapchains, surface_errors, device_losses, intervals_overwritten,
-    interval_count, interval_total_ns, interval_max_ns, capture_generation;
+    interval_count, interval_total_ns, interval_max_ns, long_intervals,
+    capture_presents, capture_generation;
     int last_result, last_allocation_result; uint64_t heap_budget, heap_usage, device_local_heap, last_allocation_bytes;
     uint32_t last_allocation_type;
     uint32_t vendor, device, api, driver_version; char gpu[VK_MAX_PHYSICAL_DEVICE_NAME_SIZE]; };
@@ -144,10 +145,13 @@ static VKAPI_ATTR VkResult VKAPI_CALL obs_present(VkQueue queue,const VkPresentI
             uint64_t interval=now-q->last_present;
             if(interval<10000000000ull){uint64_t index=obs_stats.interval_count++;
                 obs_intervals[index%OBS_INTERVALS]=interval;if(index>=OBS_INTERVALS)++obs_stats.intervals_overwritten;
-                obs_stats.interval_total_ns+=interval;if(interval>obs_stats.interval_max_ns)obs_stats.interval_max_ns=interval;}}
+                obs_stats.interval_total_ns+=interval;
+                if(interval>=100000000ull)++obs_stats.long_intervals;
+                if(interval>obs_stats.interval_max_ns)obs_stats.interval_max_ns=interval;}}
         if(hints&&!paused&&q->cpu_thread==(uintptr_t)pthread_self()&&q->last_cpu&&cpu>q->last_cpu)work=cpu-q->last_cpu;
         q->last_present=paused?0:now;q->last_cpu=paused?0:cpu;q->cpu_thread=(uintptr_t)pthread_self();q->generation=obs_stats.capture_generation;break;}
     if(capture)budget=obs_stats.presents%120==0;
+    uint64_t generation=obs_stats.capture_generation;
     ++obs_stats.presents;pthread_mutex_unlock(&obs_lock);
     /* CPU time on this presentation thread excludes blocked/sleeping time. It
      * does not represent all game/render worker work or GPU execution time. */
@@ -155,7 +159,13 @@ static VKAPI_ATTR VkResult VKAPI_CALL obs_present(VkQueue queue,const VkPresentI
     if(work&&work<1000000000ull&&fps>0&&obs_hint_callback)obs_hint_callback(work,1000000000ull/(unsigned)fps);
     if(budget&&device)obs_budget(device);
     VkResult result=call(queue,info);obs_result(result);
-    if(result<0){pthread_mutex_lock(&obs_lock);++obs_stats.present_errors;pthread_mutex_unlock(&obs_lock);}
+    if(result<0||(capture&&!paused)){
+        pthread_mutex_lock(&obs_lock);
+        if(result<0)++obs_stats.present_errors;
+        else if(generation==obs_stats.capture_generation &&
+                (result==VK_SUCCESS||result==VK_SUBOPTIMAL_KHR))++obs_stats.capture_presents;
+        pthread_mutex_unlock(&obs_lock);
+    }
     return result;
 }
 static VKAPI_ATTR VkResult VKAPI_CALL obs_submit(VkQueue queue,uint32_t count,const VkSubmitInfo *info,VkFence fence) {
@@ -282,10 +292,13 @@ static void obs_snapshot(char *output,size_t capacity) {
     uint64_t intervals[OBS_INTERVALS];pthread_mutex_lock(&obs_lock);struct obs_totals s=obs_stats;
     size_t count=s.interval_count<OBS_INTERVALS?(size_t)s.interval_count:OBS_INTERVALS;memcpy(intervals,obs_intervals,count*sizeof(uint64_t));pthread_mutex_unlock(&obs_lock);
     qsort(intervals,count,sizeof(uint64_t),obs_compare_interval);char gpu[768];escaped(gpu,sizeof(gpu),s.gpu);
+    uint64_t p50=count?intervals[(count-1)/2]:0;
     uint64_t p95=count?intervals[(count*95+99)/100-1]:0,p99=count?intervals[(count*99+99)/100-1]:0;
-    snprintf(output,capacity,"{\"hookInstalled\":%s,\"captureActive\":%s,\"performanceHintsRequested\":%s,\"gpu\":\"%s\",\"vendorId\":%u,\"deviceId\":%u,\"apiVersion\":%u,\"driverVersionRaw\":%u,\"trackedAllocationBytes\":%llu,\"peakTrackedAllocationBytes\":%llu,\"allocationCount\":%llu,\"freeCount\":%llu,\"allocationFailures\":%llu,\"lastAllocationFailureBytes\":%llu,\"lastAllocationFailureMemoryTypeIndex\":%u,\"lastAllocationFailureResult\":%d,\"untrackedAllocations\":%llu,\"deviceLocalBudgetBytes\":%llu,\"deviceLocalUsageBytes\":%llu,\"presentCount\":%llu,\"presentFailures\":%llu,\"deviceLossObservations\":%llu,\"surfaceErrorObservations\":%llu,\"submitCount\":%llu,\"submittedCommandBuffers\":%llu,\"graphicsPipelineRequests\":%llu,\"computePipelineRequests\":%llu,\"pipelineCreateNs\":%llu,\"swapchainCreates\":%llu,\"lastVkResult\":%d,\"presentIntervalSamples\":%llu,\"retainedIntervalSamples\":%zu,\"presentIntervalP95Ns\":%llu,\"presentIntervalP99Ns\":%llu,\"presentIntervalMaxNs\":%llu,\"scope\":\"Selected-loader device dispatch; Vulkan allocation totals exclude suballocations and pre-hook allocations. Budget/usage are driver reports, not process ownership. Intervals are presentation cadence, may include generated frames, and are not GPU or rendered-frame execution times. Percentiles cover the retained interval window. Zero budget means unavailable.\"}",
+    uint64_t mean=s.interval_count?s.interval_total_ns/s.interval_count:0;
+    snprintf(output,capacity,"{\"hookInstalled\":%s,\"captureActive\":%s,\"performanceHintsRequested\":%s,\"gpu\":\"%s\",\"vendorId\":%u,\"deviceId\":%u,\"apiVersion\":%u,\"driverVersionRaw\":%u,\"trackedAllocationBytes\":%llu,\"peakTrackedAllocationBytes\":%llu,\"allocationCount\":%llu,\"freeCount\":%llu,\"allocationFailures\":%llu,\"lastAllocationFailureBytes\":%llu,\"lastAllocationFailureMemoryTypeIndex\":%u,\"lastAllocationFailureResult\":%d,\"untrackedAllocations\":%llu,\"deviceLocalBudgetBytes\":%llu,\"deviceLocalUsageBytes\":%llu,\"presentCount\":%llu,\"presentFailures\":%llu,\"deviceLossObservations\":%llu,\"surfaceErrorObservations\":%llu,\"submitCount\":%llu,\"submittedCommandBuffers\":%llu,\"graphicsPipelineRequests\":%llu,\"computePipelineRequests\":%llu,\"pipelineCreateNs\":%llu,\"swapchainCreates\":%llu,\"lastVkResult\":%d,\"presentIntervalSamples\":%llu,\"retainedIntervalSamples\":%zu,\"presentIntervalP50Ns\":%llu,\"presentIntervalP95Ns\":%llu,\"presentIntervalP99Ns\":%llu,\"presentIntervalMaxNs\":%llu,\"presentIntervalMeanNs\":%llu,\"presentIntervalsOver100ms\":%llu,\"recordingSuccessfulPresents\":%llu,\"scope\":\"Selected-loader device dispatch; Vulkan allocation totals exclude suballocations and pre-hook allocations. Budget/usage are driver reports, not process ownership. Intervals are presentation cadence, may include generated frames, and are not GPU or rendered-frame execution times. Percentiles cover the retained interval window. Zero budget means unavailable.\"}",
         obs_hooked?"true":"false",atomic_load(&obs_capture)?"true":"false",atomic_load(&obs_hints)?"true":"false",gpu,s.vendor,s.device,s.api,s.driver_version,
-        (unsigned long long)s.live,(unsigned long long)s.peak,(unsigned long long)s.allocations,(unsigned long long)s.frees,(unsigned long long)s.failed,(unsigned long long)s.last_allocation_bytes,s.last_allocation_type,s.last_allocation_result,(unsigned long long)s.untracked,(unsigned long long)s.heap_budget,(unsigned long long)s.heap_usage,(unsigned long long)s.presents,(unsigned long long)s.present_errors,(unsigned long long)s.device_losses,(unsigned long long)s.surface_errors,(unsigned long long)s.submits,(unsigned long long)s.command_buffers,(unsigned long long)s.graphics,(unsigned long long)s.compute,(unsigned long long)s.pipeline_ns,(unsigned long long)s.swapchains,s.last_result,(unsigned long long)s.interval_count,count,(unsigned long long)p95,(unsigned long long)p99,(unsigned long long)s.interval_max_ns);
+        (unsigned long long)s.live,(unsigned long long)s.peak,(unsigned long long)s.allocations,(unsigned long long)s.frees,(unsigned long long)s.failed,(unsigned long long)s.last_allocation_bytes,s.last_allocation_type,s.last_allocation_result,(unsigned long long)s.untracked,(unsigned long long)s.heap_budget,(unsigned long long)s.heap_usage,(unsigned long long)s.presents,(unsigned long long)s.present_errors,(unsigned long long)s.device_losses,(unsigned long long)s.surface_errors,(unsigned long long)s.submits,(unsigned long long)s.command_buffers,(unsigned long long)s.graphics,(unsigned long long)s.compute,(unsigned long long)s.pipeline_ns,(unsigned long long)s.swapchains,s.last_result,(unsigned long long)s.interval_count,count,(unsigned long long)p50,(unsigned long long)p95,(unsigned long long)p99,(unsigned long long)s.interval_max_ns,
+        (unsigned long long)mean,(unsigned long long)s.long_intervals,(unsigned long long)s.capture_presents);
 }
 
 static JavaVM *obs_vm;static jclass obs_hint_class;static jmethodID obs_hint_report;
@@ -317,7 +330,17 @@ JNIEXPORT jboolean JNICALL Java_com_gtavsource_android_XhynV02Native_observe(JNI
         if(cls){obs_hint_class=(*env)->NewGlobalRef(env,cls);(*env)->DeleteLocalRef(env,cls);if(obs_hint_class){obs_hint_report=(*env)->GetStaticMethodID(env,obs_hint_class,"report","(JJ)V");(*env)->GetJavaVM(env,&obs_vm);}}
         if((*env)->ExceptionCheck(env))(*env)->ExceptionClear(env);}
     obs_hint_callback=obs_java_hint;atomic_store(&obs_hints,hints&&obs_hint_class&&obs_hint_report);atomic_store(&obs_target_fps,target>0&&target<=240?target:0);
-    pthread_mutex_lock(&obs_lock);++obs_stats.capture_generation;pthread_mutex_unlock(&obs_lock);atomic_store(&obs_capture,capture);return JNI_TRUE;
+    pthread_mutex_lock(&obs_lock);
+    ++obs_stats.capture_generation;
+    obs_stats.interval_count=0;
+    obs_stats.interval_total_ns=0;
+    obs_stats.interval_max_ns=0;
+    obs_stats.long_intervals=0;
+    obs_stats.capture_presents=0;
+    obs_stats.intervals_overwritten=0;
+    atomic_store(&obs_capture,capture);
+    pthread_mutex_unlock(&obs_lock);
+    return JNI_TRUE;
 }
 JNIEXPORT void JNICALL Java_com_gtavsource_android_XhynV02Native_capture(JNIEnv *env,jclass type,jboolean enabled){
     (void)env;(void)type;atomic_store(&obs_capture,enabled);pthread_mutex_lock(&obs_lock);++obs_stats.capture_generation;pthread_mutex_unlock(&obs_lock);

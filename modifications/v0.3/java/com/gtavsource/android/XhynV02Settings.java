@@ -242,6 +242,18 @@ public final class XhynV02Settings {
         toggle("Record next game", "performance", "capture", false, ()->put("xhyn","capture_seconds","1200"));
         text("Recording stops automatically after 20 minutes or when you close the game. It is off during normal play. Reports stay on your device until you choose to share them.",13);
         button("What happened last time?", () -> showText("Last game attempt", XhynV02Runtime.userSummary(activity)));
+        button("Try once without saved DXVK edits", () -> {
+            if(GTAVActivity.isGameRunning()) {
+                info("Close the game first","Close the game before trying different launch settings.");
+                return;
+            }
+            XhynV02Runtime.skipDxvkOverridesOnce(activity,cfg.root);
+            toast("Play will use the launcher’s managed DXVK settings once. Your saved edits are kept.");
+        });
+        button("Recording history", () -> io.execute(() -> {
+            String result=XhynV02Comparison.history(new File(activity.getFilesDir(),"xhyn-sessions"));
+            runOnUiThread(() -> showText("Recording history",result));
+        }));
         button("Compare two recordings",()->io.execute(()->{
             String message;
             try{

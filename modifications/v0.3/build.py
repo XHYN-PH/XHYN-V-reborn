@@ -13,6 +13,7 @@ import sys
 INPUT_SHA256 = '93f7850751a6ca172ba3cc6c42ca9abe1557dea1bba7b9def9d0bef0c9cd894d'
 PACKAGE = Path(__file__).resolve().parent
 REPOSITORY = PACKAGE.parents[1]
+BUILD_NAME = "XHYN-V-" + json.loads((PACKAGE / "scope.json").read_text())["release"]
 
 
 def digest(path):
@@ -144,13 +145,13 @@ def main():
     if args.verify_only:
         print('All prepackage checks passed; APK packaging and signing were not started.',flush=True)
         return
-    unsigned = work / 'XHYN-V-0.3-Preview2-unsigned.apk'
+    unsigned = work / (BUILD_NAME + '-unsigned.apk')
     run('package', [java, '-jar', apktool, 'b', work / 'decoded', '-p', work / 'framework', '-o', unsigned])
     run('package-runtime-resources', [sys.executable, PACKAGE / 'package_runtime_resources.py',
         '--input-apk', original, '--unsigned-apk', unsigned, '--report', reports / 'runtime-resources.json'])
     final = unsigned
     if signing:
-        final = work / 'XHYN-V-0.3-Preview2.apk'
+        final = work / (BUILD_NAME + '.apk')
         run('sign', [java, '-jar', tools / 'apksigner.jar', 'sign', '--ks', args.keystore, '--ks-key-alias', args.key_alias, '--ks-pass', 'file:' + str(args.password_file), '--v4-signing-enabled', 'false', '--alignment-preserved', 'false', '--lib-page-alignment', '16384', '--out', final, unsigned])
         signature = run('signature-verification', [java, '-jar', tools / 'apksigner.jar', 'verify', '--verbose', '--print-certs', final])
         (reports / 'signature-verification.txt').write_text(signature)
