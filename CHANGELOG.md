@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3 Preview 3 — 19 November 2026
+
+- Fixed an SDL startup failure that could occur when retrying a game launch.
+- Startup reports show the first error and the last stage reached.
+- Recording History shows frame timings, long gaps, memory use, and screen refresh when available.
+- Refresh matching returns control to Android when the option is off or the frame rate is uncapped.
+- Try one launch with the launcher’s managed DXVK settings. Saved DXVK edits apply again on the following launch.
+
+[Download Preview 3](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.3-preview3)
+
 ## 0.2 Hotfix 2 — 30 October 2026
 
 - Added an adjustable 0–100% render-scale slider; 0 uses the game resolution.
