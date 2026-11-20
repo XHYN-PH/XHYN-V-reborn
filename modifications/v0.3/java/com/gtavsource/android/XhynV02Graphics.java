@@ -64,7 +64,7 @@ public final class XhynV02Graphics {
         return xml;
     }
 
-    private static File settings(File save) {
+    static File settings(File save) {
         File file=new File(save,"settings.xml");
         return !file.isFile()&&new File(save,"Settings.xml").isFile()?new File(save,"Settings.xml"):file;
     }

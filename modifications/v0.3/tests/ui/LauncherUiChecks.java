@@ -205,6 +205,36 @@ public class LauncherUiChecks {
         XhynV02Runtime.configure(activity,activity.config);
         assertTrue(Files.readString(xml).contains("TextureQuality value=\"0\""));
     }
+    @Test public void largeGraphicsSettingsCanBeAppliedAndCaptured() throws Exception {
+        Path save = Files.createDirectories(activity.config.root.toPath().resolve("save"));
+        Path settings = save.resolve("settings.xml");
+        Files.writeString(settings, "<Settings><!--" + " ".repeat(70 * 1024)
+                + "--><graphics><TextureQuality value=\"2\"/></graphics></Settings>");
+        activity.config.put("xhyn_graphics", "texturequality", "0");
+        activity.config.save();
+
+        XhynV02Runtime.configure(activity, activity.config);
+
+        String applied = Files.readString(settings);
+        assertTrue(applied.contains("TextureQuality value=\"0\""));
+        String session = activity.getSharedPreferences("xhyn-v02", 0).getString("lastSession", "");
+        Path recorded = activity.getFilesDir().toPath().resolve("xhyn-sessions")
+                .resolve(session).resolve("applied-settings.xml");
+        assertEquals(applied, Files.readString(recorded));
+    }
+    @Test public void oversizedOptionalSettingsSnapshotDoesNotBlockLaunchSetup() throws Exception {
+        Path settings = activity.config.file.toPath();
+        String original = Files.readString(settings) + "\n;" + " ".repeat(1024 * 1024) + "\n";
+        Files.writeString(settings, original);
+
+        XhynV02Runtime.configure(activity, activity.config);
+
+        String session = activity.getSharedPreferences("xhyn-v02", 0).getString("lastSession", "");
+        Path report = activity.getFilesDir().toPath().resolve("xhyn-sessions").resolve(session);
+        assertTrue(Files.isRegularFile(report.resolve("session.json")));
+        assertFalse(Files.exists(report.resolve("android.ini")));
+        assertEquals(original, Files.readString(settings));
+    }
     @Test public void allLauncherPageHeadersRemainReachableWithoutLoadingGameData(){
         for(int page=0;page<26;page++){
             ReflectionHelpers.callInstanceMethod(activity,"showPage",ClassParameter.from(int.class,page),ClassParameter.from(boolean.class,false));

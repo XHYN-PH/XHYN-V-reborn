@@ -49,6 +49,9 @@ public final class LogHostChecks {
   one.put("requested_driver","different-driver");Files.writeString(a.resolve("session.json"),one.toString());check(!XhynV02Comparison.comparable(a.toFile(),b.toFile()),"Different drivers cannot become a warm-cache comparison");
   one.put("requested_driver","system").put("frame_generation",true);Files.writeString(a.resolve("session.json"),one.toString());check(!XhynV02Comparison.comparable(a.toFile(),b.toFile()),"Generated and base-frame runs are not silently mixed");
   one.put("frame_generation",false);Files.writeString(a.resolve("session.json"),one.toString());Files.writeString(a.resolve("android.ini"),"[performance]\nframe_limit=30\n");check(!XhynV02Comparison.comparable(a.toFile(),b.toFile()),"Frame cap differences prevent misleading comparisons");
+  Files.delete(a.resolve("android.ini"));
+  Files.delete(b.resolve("android.ini"));
+  check(!XhynV02Comparison.comparable(a.toFile(), b.toFile()), "Skipped INI snapshots do not count as matching settings");
   Files.delete(file);check(XhynV02LogSlice.snapshot(file.toFile()).equals("v2:0:0::"),"Missing log snapshot accepted");
   System.out.println("PASS "+checks+" session-log and script-compatibility host checks");
  }

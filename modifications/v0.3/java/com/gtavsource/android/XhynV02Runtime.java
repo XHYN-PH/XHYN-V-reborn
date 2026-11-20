@@ -13,6 +13,7 @@ import org.json.JSONObject;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.*;
@@ -272,13 +273,10 @@ public final class XhynV02Runtime {
             while((count=input.read(buffer))!=-1){if(bytes.size()+count>131072)throw new IOException("Build identity exceeds limit");bytes.write(buffer,0,count);}
             XhynV02Config.write(new File(session,"packaged-build-identity.json"),bytes.toString("UTF-8"));
         }catch(IOException unavailable){XhynV02Config.write(new File(session,"packaged-build-identity-unavailable.txt"),"Build identity was unavailable; the game was not blocked.\n");}
-        File settings=new File(cfg.root,"save/settings.xml");
-        if(settings.isFile()&&!Files.isSymbolicLink(settings.toPath())&&settings.length()<=1024*1024){
-            XhynV02Config.write(new File(session,"applied-settings.xml"),XhynV02Config.read(settings));
-        }
+        snapshotSettings(XhynV02Graphics.settings(new File(cfg.root, "save")), new File(session, "applied-settings.xml"));
         XhynV02Config.write(new File(session,"measurement-notes.txt"),"settings.xml records requested game settings after applying overrides; swapchain dimensions are output size and do not prove actual scene render-target size. PSS, managed/native heap, Vulkan allocations and driver budgets overlap and must not be added. Pipeline creation time is summed across concurrent calls and is not elapsed frame-stall time. Compare the same scene twice with unchanged settings to distinguish first-run shader work from repeat-run behavior.\n");
         XhynV02Config.write(new File(session, "effective-dxvk.conf"), text);
-        XhynV02Config.write(new File(session, "android.ini"), XhynV02Config.read(cfg.file));
+        snapshotSettings(cfg.file, new File(session, "android.ini"));
         JSONObject logs = new JSONObject();
         JSONObject logPreparation=new JSONObject();
         for(String name:XhynV02Reports.RUNTIME_LOGS){
@@ -298,6 +296,28 @@ public final class XhynV02Runtime {
         context.getSharedPreferences("xhyn-v02", 0).edit().putString("lastSession", sessionId).apply();
         XhynV02Launch.bind(context,sessionId,session);
         if (cfg.getBoolean("performance", "capture", false)) startCapture(context.getApplicationContext(), cfg);
+    }
+
+    private static void snapshotSettings(File source, File destination) {
+        if (!source.isFile() || Files.isSymbolicLink(source.toPath())) return;
+        int limit = 1024 * 1024;
+        try {
+            if (source.length() > limit) throw new IOException("Settings snapshot exceeds 1 MiB");
+            try (InputStream input = Files.newInputStream(source.toPath(), LinkOption.NOFOLLOW_LINKS);
+                 OutputStream output = new FileOutputStream(destination)) {
+                byte[] buffer = new byte[8192];
+                int total = 0;
+                int count;
+                while ((count = input.read(buffer)) != -1) {
+                    total += count;
+                    if (total > limit) throw new IOException("Settings snapshot exceeds 1 MiB");
+                    output.write(buffer, 0, count);
+                }
+            }
+        } catch (IOException error) {
+            destination.delete();
+            Log.w("XHYN V", "Could not capture " + destination.getName() + " for diagnostics", error);
+        }
     }
 
     public static void librariesLoaded(Activity activity) {

@@ -81,7 +81,9 @@ public final class XhynV02Comparison {
             if(a.optString(key).isEmpty()||!a.optString(key).equals(b.optString(key)))return false;
         }
         if(a.optBoolean("frame_generation")!=b.optBoolean("frame_generation")||a.optBoolean("performance_hints")!=b.optBoolean("performance_hints"))return false;
-        if(!read(first,"effective-dxvk.conf").equals(read(second,"effective-dxvk.conf"))||!read(first,"android.ini").equals(read(second,"android.ini")))return false;
+        String firstIni = read(first, "android.ini");
+        if (firstIni.isEmpty() || !firstIni.equals(read(second, "android.ini"))) return false;
+        if (!read(first, "effective-dxvk.conf").equals(read(second, "effective-dxvk.conf"))) return false;
         JSONObject xMetrics=new JSONObject(read(first,"graphics-metrics.json")),yMetrics=new JSONObject(read(second,"graphics-metrics.json"));
         for(String key:new String[]{"vendorId","deviceId","apiVersion","driverVersionRaw"})if(!xMetrics.has(key)||!yMetrics.has(key)||xMetrics.optLong(key)!=yMetrics.optLong(key))return false;
         File x=new File(first,"applied-settings.xml"),y=new File(second,"applied-settings.xml");
