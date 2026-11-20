@@ -163,6 +163,86 @@ def results(old):
     :xhyn_original_result
 """,1)
 method('GameMenuActivity','onActivityResult(IILandroid/content/Intent;)V',results)
+def driver_picker(old):
+    start = old.index('    .line 1292\n')
+    end = old.index('    :cond_0\n', start)
+    assert 'const/16 v1, 0x15' in old[:start] and '->work(' in old[start:end]
+    return old[:start] + (
+        '    invoke-static {p0, v0}, Lcom/gtavsource/android/XhynV02Settings;->importDriver'
+        '(Lcom/gtavsource/android/GameMenuActivity;Landroid/net/Uri;)V\n\n    return-void\n\n'
+    ) + old[end:]
+method('GameMenuActivity','handlePicked(ILjava/util/List;)V',driver_picker)
+after('GameMenuActivity','controls(Lcom/gtavsource/android/GameMenuActivity$ControlLibrary;)V',
+      'invoke-static {p0}, Lcom/gtavsource/android/XhynV02Controls;->appendControllerTest(Lcom/gtavsource/android/GameMenuActivity;)V')
+
+def editor_toolbar(old):
+    marker = '    .line 72\n    new-instance v12, Landroid/widget/HorizontalScrollView;'
+    assert old.count(marker) == 1
+    return old.replace(marker, (
+        '    iget-object v3, v0, Lcom/gtavsource/android/LayoutEditor;->canvas:Lcom/gtavsource/android/LayoutEditor$EditorCanvas;\n'
+        '    invoke-static {v5, v1, v3}, Lcom/gtavsource/android/XhynV02Controls;->editorTools'
+        '(Landroid/content/Context;Landroid/widget/LinearLayout;Landroid/view/View;)V\n\n'
+    ) + marker, 1)
+method('LayoutEditor','<init>(Lcom/gtavsource/android/GameMenuActivity;Lcom/gtavsource/android/ControlProfile;Ljava/io/File;Ljava/lang/String;)V',
+       editor_toolbar)
+def editor_draw(old):
+    marker = '    invoke-super {p0, p1}, Lcom/gtavsource/android/ControlCanvas;->onDraw(Landroid/graphics/Canvas;)V\n'
+    assert old.count(marker) == 1
+    return old.replace(marker, marker + (
+        '    invoke-static {p0, p1}, Lcom/gtavsource/android/XhynV02Controls;->drawGuides'
+        '(Landroid/view/View;Landroid/graphics/Canvas;)V\n'
+    ), 1)
+method('LayoutEditor$EditorCanvas','onDraw(Landroid/graphics/Canvas;)V',editor_draw)
+def editor_drag(old):
+    marker = '    invoke-virtual {v3, v2, p1, v0, v1}, Lcom/gtavsource/android/ControlProfile$Control;->moveTo(FFII)V'
+    assert old.count(marker) == 1
+    return old.replace(marker, (
+        '    invoke-static {p0, v2}, Lcom/gtavsource/android/XhynV02Controls;->snap(Landroid/view/View;F)F\n'
+        '    move-result v2\n'
+        '    invoke-static {p0, p1}, Lcom/gtavsource/android/XhynV02Controls;->snap(Landroid/view/View;F)F\n'
+        '    move-result p1\n\n'
+    ) + marker, 1)
+method('LayoutEditor$EditorCanvas','onTouchEvent(Landroid/view/MotionEvent;)Z',editor_drag)
+
+def lan_details(old):
+    marker = '    invoke-direct {v1, p0, p1}, Lcom/gtavsource/android/LanPage;-><init>(Landroid/app/Activity;I)V\n'
+    assert old.count(marker) == 1
+    return old.replace(marker, marker + (
+        '    invoke-static {p0, v1}, Lcom/gtavsource/android/XhynV02Lan;->addToPage'
+        '(Landroid/app/Activity;Landroid/widget/LinearLayout;)V\n'
+    ), 1)
+method('LanPage','build(Landroid/app/Activity;I)V',lan_details)
+
+def lan_send(old):
+    start = old.index('    new-instance v1, Ljava/net/DatagramPacket;')
+    end = old.index('    iget-wide v0, p0, Lcom/gtavsource/android/lan/LanTransport;->sentBytes:J', start)
+    assert '->send(Ljava/net/DatagramPacket;)V' in old[start:end]
+    return old[:start] + (
+        '    invoke-static {v0, p1, p2}, Lcom/gtavsource/android/XhynV02Lan;->send'
+        '(Ljava/net/DatagramSocket;[BLjava/net/InetSocketAddress;)V\n\n'
+    ) + old[end:]
+method('com/gtavsource/android/lan/LanTransport','sendBytes([BLjava/net/InetSocketAddress;)V',lan_send)
+
+def lan_pack(old):
+    marker = '    invoke-static/range {v1 .. v11}, Lcom/gtavsource/android/lan/LanTransport;->statePacketsWithMac'
+    result = '    move-result-object p2\n'
+    assert old.count(marker) == 1 and old.count(result) == 1
+    return old.replace(marker, '    invoke-static {}, Lcom/gtavsource/android/XhynV02Lan;->packing()V\n\n' + marker, 1).replace(
+        result, result + '    invoke-static {p2}, Lcom/gtavsource/android/XhynV02Lan;->packed([[B)V\n', 1)
+method('com/gtavsource/android/lan/LanTransport','sendFrame(Lcom/gtavsource/android/lan/LanTransport$Peer;ILcom/gtavsource/android/lan/LanTransport$Frame;)V',lan_pack)
+
+def avoid_duplicate_lan_teardown(old):
+    marker = '    .line 90\n'
+    assert old.count(marker) == 1
+    return old.replace(marker, (
+        '    sget-boolean v0, Lcom/gtavsource/android/lan/LanSession;->cleanup:Z\n'
+        '    if-eqz v0, :xhyn_lan_disconnect\n'
+        '    sget-boolean v0, Lcom/gtavsource/android/lan/LanSession;->active:Z\n'
+        '    if-nez v0, :xhyn_lan_disconnect\n'
+        '    return-void\n'
+        '    :xhyn_lan_disconnect\n'
+    ) + marker, 1)
+method('com/gtavsource/android/lan/LanSession','disconnect()V',avoid_duplicate_lan_teardown)
 # Register About as page 21 inside System, immediately after Game Resources (18).
 def register_pages(old):
     assert old.count('    return-void')==1

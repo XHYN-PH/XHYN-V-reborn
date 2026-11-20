@@ -1,5 +1,7 @@
 package com.gtavsource.android;
 import android.app.Activity;
+import android.content.Context;
+import android.os.PowerManager;
 import android.view.Display;
 import android.view.Surface;
 import android.view.SurfaceView;
@@ -12,6 +14,24 @@ import java.util.WeakHashMap;
 public final class XhynV02Display {
     private static final WeakHashMap<Activity,Integer> previous=new WeakHashMap<>();
     private static final WeakHashMap<Surface,Integer> requests=new WeakHashMap<>();
+
+    static boolean supportsSustained(Context context) {
+        try {
+            PowerManager power = context.getSystemService(PowerManager.class);
+            return power != null && power.isSustainedPerformanceModeSupported();
+        } catch (RuntimeException unavailable) { return false; }
+    }
+
+    static void sustain(Activity activity, RuntimeConfig cfg) {
+        try {
+            if (supportsSustained(activity)) {
+                boolean enabled = cfg != null && cfg.getBoolean("xhyn", "sustained_performance", false);
+                activity.getWindow().setSustainedPerformanceMode(enabled);
+            }
+        } catch (RuntimeException unavailable) {
+            android.util.Log.w("XHYN V", "Could not apply sustained performance mode", unavailable);
+        }
+    }
     public static int choose(float[] rates,int target){
         int selected=-1;double best=Double.POSITIVE_INFINITY;
         for(int i=0;i<rates.length;i++){

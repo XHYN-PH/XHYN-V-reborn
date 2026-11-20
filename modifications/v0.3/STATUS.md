@@ -2,6 +2,22 @@
 
 The base is GTAV 1.7.57. Its matched engine, LAN binding, room protocol and lifecycle calls are retained. Theme stays at page 21, LAN at 22–24, and About is page 25 under System. The original application and artwork verification remain.
 
+## Preview 4 follow-up
+
+| Selected work | Status |
+| --- | --- |
+| 6 and 7. Graphics status and importing | The launcher shows loaded and next-launch graphics choices. The original Vulkan picker stages and checks an archive with progress and cancellation before it appears in the list. The player chooses when to select it. |
+| 9. Controls | Layout Editor has optional alignment and safe-area guides. Scene Preview remains available in the editor. The controller test displays live inputs and a test-only dead zone. |
+| 10 and older LAN items 9 and 10. Session and compatibility | LAN Room Details shows route, host and build information and can list enabled local resource mods. Duplicate disconnects are ignored during native cleanup. Real reconnect and backgrounding still need paired phone tests. |
+| 12–14. Startup and cache work | Reporting reuses a verified custom archive identity when the filesystem exposes a stable file stamp. Native package validation still runs through the original loaders. Players can clear an individual cache. Old inactive caches are trimmed under a 512 MiB total budget while preserving the active cache. Optional build and cache reporting runs in the background once launch is prepared. |
+| 15. Sustained pacing | Supported phones can opt into Android sustained performance mode. Existing refresh matching uses the player's FPS target. Heat and pacing effects still need repeatable phone runs. |
+| 16. Texture streaming | Upload scheduling and texture lifetime depend on matching engine or renderer source. The shipped engine keeps its existing streaming behavior. |
+| 17 and older native crash items 12 and 13. Native triage | The repeated invalid-pointer read at `0x2a9d924` and the separate null-base read at `0x2d13084` both match engine build `4b4713047eb0503d3ae2acf9fa845e45cf0cbd47`. They have different failure sites. Root repairs need the corresponding object producers and lifetime information. |
+| Older item 14. Xclipse | The launcher reports the exact required and maximum Direct3D feature levels from the current attempt when the renderer writes a rejection. The A55/Xclipse 530 report rejected 10.0 and reported a maximum of 0. Device testing is still needed for alternative renderer and driver combinations. |
+| Older item 19. LAN overhead | An optional room measurement counts outbound datagrams, bytes and fragmented state sends, and times Java preparation. The transport reuses its outbound datagram object. Protocol 14 packets and authentication remain compatible. Native snapshot time, entity relevance and gameplay interpolation need a separate investigation. |
+
+Death and respawn, shared vehicle authority and steering, remote actions and combat, sound effects, police AI, and radio synchronization depend on the engine and native LAN state. The available 1.7.57 Java transport can expose timing and compatibility, while the supplied alternate base uses a different protocol. Native gameplay fixes and sustained multiplayer still require the matching runtime interfaces and tests on two phones.
+
 Preview 2 repairs Preview 1's launch-blocking packaging omission: all 146 original
 raw-path artwork files are restored byte for byte and stored uncompressed before
 signing. The original Application checks them before showing any interface.

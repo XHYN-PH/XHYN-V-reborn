@@ -28,6 +28,7 @@ public final class XhynV02Settings {
     private Set<String> dxvkSupported=Collections.emptySet();
     private static final int IMPORT_CONFIG=502, EXPORT_REPORT=503, PROBE=505;
     private String exportReport;
+    private XhynV02DriverImport driverImport;
     private final java.util.concurrent.ExecutorService io=Executors.newSingleThreadExecutor();
     private final Handler handler=new Handler(Looper.getMainLooper());
     private XhynV02Settings(GameMenuActivity owner) {
@@ -57,14 +58,31 @@ public final class XhynV02Settings {
         XhynV02Settings value=(XhynV02Settings)activity.xhynSettings;
         if(value!=null)value.dispose();activity.xhynSettings=null;
     }
-    private void dispose(){disposed=true;handler.removeCallbacksAndMessages(null);io.shutdown();}
+    private void dispose(){
+        disposed=true;
+        if(driverImport!=null && driverImport.running())driverImport.cancel();
+        handler.removeCallbacksAndMessages(null);
+        io.shutdown();
+    }
+    public static void importDriver(GameMenuActivity activity, Uri source) {
+        XhynV02Settings value = get(activity);
+        if (value.driverImport != null && value.driverImport.running()) {
+            value.toast("Wait for the current driver import to finish.");
+            return;
+        }
+        value.driverImport = new XhynV02DriverImport(activity, value.cfg, source);
+        value.driverImport.start();
+    }
     public static boolean result(GameMenuActivity activity,int request,int result,Intent data) {
         if(request!=IMPORT_CONFIG && request!=EXPORT_REPORT && request!=PROBE)return false;
         get(activity).activityResult(request,result,data);return true;
     }
     public static void resume(GameMenuActivity activity) {
         XhynV02Settings value=(XhynV02Settings)activity.xhynSettings;
-        if(value!=null && !value.disposed){value.cfg=RuntimeConfig.load(value.cfg.root);if(value.page==DXVK||value.page==PERFORMANCE)value.draw();else value.updateProbe();}
+        if(value!=null && !value.disposed && value.body!=null && value.body.isAttachedToWindow()){
+            value.cfg=RuntimeConfig.load(value.cfg.root);
+            if(value.page==DRIVERS||value.page==DXVK||value.page==PERFORMANCE)value.draw();
+        }
     }
     private boolean isFinishing(){return disposed||activity.isFinishing()||activity.isDestroyed();}
     private void runOnUiThread(Runnable action){activity.runOnUiThread(()->{if(!isFinishing())action.run();});}
@@ -172,10 +190,15 @@ public final class XhynV02Settings {
         choice("Maximum frame latency", new String[]{"1 frame", "2 frames", "3 frames"}, new String[]{"1", "2", "3"}, "xhyn", "latency", XhynV02Runtime.defaultLatency(cfg), "dxgi.maxFrameLatency");
         toggle("Match display refresh to the FPS target", "xhyn", "match_refresh", true, null);
         toggle("Android performance hints (experimental)", "xhyn", "performance_hints", false, null);
-        text("Display matching requests a suitable screen refresh rate. Performance hints help Android schedule the presentation thread on supported Android 12+ devices. Both use the existing FPS target; device testing is still needed.",13);
+        if (XhynV02Display.supportsSustained(activity)) {
+            toggle("Sustained performance mode", "xhyn", "sustained_performance", false, null);
+            text("Asks Android for steadier performance during a long session. Your FPS cap and graphics settings stay in effect.", 13);
+        }
+        text("Display matching requests a suitable screen refresh rate. Performance hints help Android schedule the presentation thread on supported Android 12+ devices.",13);
     }
     private void dxvk(){
         section("DXVK tuning");
+        text(XhynV02Runtime.selectionSummary(activity, cfg), 14);
         text("These controls read and edit the same active configuration as the text editor. Options follow the selected bundled renderer. Restart the game after changing them.",13);
         String group="";
         String renderer="custom";try{renderer=XhynV02Runtime.rendererId(activity,cfg);}catch(Exception unavailable){}
@@ -196,7 +219,38 @@ public final class XhynV02Settings {
         button("Import dxvk.conf", () -> startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("*/*").addCategory(Intent.CATEGORY_OPENABLE), IMPORT_CONFIG));
         button("View effective configuration", () -> { try { showText("Effective dxvk.conf", XhynV02Runtime.preview(activity, RuntimeConfig.load(cfg.root))); } catch (Exception e) { error(e); } });
         text("Edit and View show the same active configuration for the next launch. Saving edits enables them. Changing a managed control removes its matching global override. Executable sections can override global controls. Turning the file off keeps your saved text.", 13);
-        button("Clear XHYN shader caches", () -> new MenuDialogBuilder(activity).setTitle("Clear shader caches?").setMessage("The game must be closed. Shaders will compile again on your next launch; this can temporarily increase stutter.").setPositiveButton("Clear", (d,w) -> { try { XhynV02Runtime.clearCaches(activity); toast("Shader caches cleared"); } catch (Exception e) { error(e); } }).setNegativeButton("Cancel", null).show());
+        button("Manage shader caches", this::manageCaches);
+    }
+    private void manageCaches() {
+        io.execute(() -> {
+            try {
+                List<XhynV02ShaderCaches.Entry> entries = XhynV02ShaderCaches.list(activity);
+                runOnUiThread(() -> {
+                    if (entries.isEmpty()) {
+                        info("Shader caches", "Caches appear here after you launch a game.");
+                        return;
+                    }
+                    String[] labels = new String[entries.size()];
+                    java.text.DateFormat format = java.text.DateFormat.getDateTimeInstance();
+                    for (int i = 0; i < labels.length; i++) {
+                        XhynV02ShaderCaches.Entry entry = entries.get(i);
+                        labels[i] = entry.label + "\n" + android.text.format.Formatter.formatShortFileSize(activity, entry.bytes)
+                                + " · Last used " + format.format(new Date(entry.lastUsed));
+                    }
+                    new MenuDialogBuilder(activity).setTitle("Shader caches").setItems(labels, (dialog, index) -> {
+                        XhynV02ShaderCaches.Entry entry = entries.get(index);
+                        new MenuDialogBuilder(activity).setTitle("Clear this shader cache?")
+                                .setMessage(entry.label + "\n\nClose the game first. Its shaders will compile again the next time this cache is used.")
+                                .setPositiveButton("Clear cache", (confirm, button) -> io.execute(() -> {
+                                    try {
+                                        XhynV02ShaderCaches.clear(activity, entry.directory.getName());
+                                        runOnUiThread(() -> toast("Shader cache cleared"));
+                                    } catch (Exception failure) { runOnUiThread(() -> error(failure)); }
+                                })).setNegativeButton("Cancel", null).show();
+                    }).setNegativeButton("Close", null).show();
+                });
+            } catch (Exception failure) { runOnUiThread(() -> error(failure)); }
+        });
     }
     private void dxvkOption(XhynV02DxvkOptions.Option option){
         String current=dxvkValues.get(option.key);
@@ -229,6 +283,7 @@ public final class XhynV02Settings {
     }
     private void drivers(){
         section("Vulkan drivers");
+        text(XhynV02Runtime.selectionSummary(activity, cfg), 14);
         text("System Vulkan is the starting point for Xclipse. PanVK for Mali and imported RADV for Xclipse are experimental and require compatible Android drivers. Device brand and a ZIP name do not prove GPU support.", 14);
         button("Check selected driver: draw and present", this::probe);
         probeStatus = MenuStyle.text(activity,"",13,0xffb3b5b9); body.addView(probeStatus); updateProbe();

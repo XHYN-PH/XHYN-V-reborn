@@ -13,6 +13,11 @@ public class AdviceHostChecks {
   check(XhynV02Advice.explain("nothing recorded").contains("no saved explanation"),"Missing evidence is not a diagnosis");
   check(XhynV02Advice.explain("ERR_MEM_EMBEDDEDALLOC_GUARD_1 error_code=0xb3e1d694").contains("not proof that RAM ran out"),"Heap guard is not misclassified as OOM");
   check(XhynV02Advice.explain("error_code=0x2f84a8ed").contains("does not mean your game folder is invalid"),"Graphics initialization has distinct recovery advice");
+  String xclipse = XhynV02Advice.explain("error_code=0x2f84a8ed\nSamsung Xclipse 530\n"
+      + "Maximum supported feature level: D3D_FEATURE_LEVEL_11_1\nMaximum supported feature level: 0\n"
+      + "Minimum required feature level D3D_FEATURE_LEVEL_10_0 not supported");
+  check(xclipse.contains("Required feature level 10.0") && xclipse.contains("maximum 0")
+      && xclipse.contains("System Vulkan"), "Xclipse rejection identifies the attempted feature level");
   check(XhynV02Advice.explain("error_code=0x00000000").contains("not a successful exit"),"Code-zero assertion remains an error with unknown subsystem");
   check(XhynV02Advice.explain("PanVK GPU job fault 0x42").contains("does not qualify all Mali"),"PanVK advice does not promise vendor-wide support");
   check(XhynV02Advice.explain("invalid RPF magic archive=x64a.rpf").contains("particular file"),"Archive error advice targets the reported file");

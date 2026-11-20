@@ -34,6 +34,11 @@ public final class XhynV02Runtime {
     private static long captureGeneration;
     private static Context application;
     private static final Object LOCK = new Object();
+    private static final ExecutorService REPORT_IO = Executors.newSingleThreadExecutor(task -> {
+        Thread thread = new Thread(task, "xhyn-session-report");
+        thread.setDaemon(true);
+        return thread;
+    });
     public static RuntimeConfig config() { return RuntimeConfig.load(application == null ? RuntimeConfig.GAME_ROOT : new File(application.getSharedPreferences("xhyn-v02", 0).getString("gameRoot", RuntimeConfig.GAME_ROOT.getPath()))); }
     public static File saved(RuntimeConfig cfg) { return new File(cfg.root, "Config/dxvk.conf"); }
     public static File effective(Context context) { return new File(context.getFilesDir(), "xhyn-effective-dxvk.conf"); }
@@ -56,7 +61,7 @@ public final class XhynV02Runtime {
         File file = new File(cfg.drivers, cfg.get("vulkan", "driver_zip", ""));
         try {
             if (!file.getCanonicalFile().getParentFile().equals(cfg.drivers.getCanonicalFile()) || !file.isFile()) throw new IOException("Driver package unavailable");
-            return hash(file);
+            return XhynV02ArchiveIdentity.hash(application, file, "driver");
         } catch(IOException unavailable) {
             // Leave actual admission/fallback to DriverManager. A missing old ZIP is
             // a driver selection problem, not an invalid game directory.
@@ -117,9 +122,42 @@ public final class XhynV02Runtime {
         String id=cfg.get("dxvk","builtin_id","");return id.isEmpty()?catalog.getString("defaultId"):id;
     }
     public static String rendererId(Context context,RuntimeConfig cfg)throws Exception{return rendererId(cfg,optionCatalog(context));}
+    static String selectedDriver(RuntimeConfig cfg) {
+        return "custom".equals(cfg.get("vulkan", "driver", "system"))
+                ? "Imported driver · " + cfg.get("vulkan", "driver_zip", "Package missing") : "System Vulkan";
+    }
+    static String selectedRenderer(Context context, RuntimeConfig cfg) throws Exception {
+        String id = rendererId(context, cfg);
+        return "custom".equals(id) ? "Imported DXVK · " + cfg.get("dxvk", "package_zip", "Package missing")
+                : "Built-in DXVK · " + id;
+    }
+
+    static String selectionSummary(Context context, RuntimeConfig cfg) {
+        String next;
+        try { next = "Next launch\n" + selectedRenderer(context, cfg) + "\n" + selectedDriver(cfg); }
+        catch (Exception unknown) { next = "Next launch\nRenderer unavailable\n" + selectedDriver(cfg); }
+        try {
+            JSONObject last = new JSONObject(XhynV02Config.read(new File(context.getFilesDir(), "xhyn-loaded-graphics.json")));
+            if (!cfg.root.getCanonicalPath().equals(last.optString("root"))) return next;
+            String title = GTAVActivity.isGameRunning() ? "Currently loaded" : "Last loaded";
+            return title + "\n" + last.getString("renderer") + "\n" + last.getString("driver") + "\n\n" + next;
+        } catch (Exception unavailable) { return next; }
+    }
+
+    private static void recordLoadedGraphics(Context context, RuntimeConfig cfg) {
+        try {
+            JSONObject loaded = new JSONObject().put("root", cfg.root.getCanonicalPath())
+                    .put("renderer", XhynEnglish.t(DxvkManager.currentStatus()))
+                    .put("driver", XhynEnglish.t(DriverManager.currentStatus()));
+            XhynV02Config.write(new File(context.getFilesDir(), "xhyn-loaded-graphics.json"), loaded.toString());
+        } catch (Exception failure) { Log.w("XHYN V", "Could not record loaded graphics", failure); }
+    }
     public static String rendererCacheIdentity(Context context,RuntimeConfig cfg)throws Exception{
         String id=rendererId(context,cfg);
-        if("custom".equals(id))return id+":"+rendererHash(cfg);
+        return rendererCacheIdentity(context, id, rendererHash(context, cfg));
+    }
+    private static String rendererCacheIdentity(Context context, String id, String archiveHash) throws Exception {
+        if("custom".equals(id))return id+":"+archiveHash;
         try{return id+":"+assetJson(context,"xhyn-build-identity.json").getJSONObject("bundled_renderers").getString(id);}
         catch(Exception unavailable){return id+":identity-unavailable:"+context.getPackageManager().getPackageInfo(context.getPackageName(),0).versionCode;}
     }
@@ -195,8 +233,11 @@ public final class XhynV02Runtime {
             Set<String> written=new HashSet<>(XhynV02Config.unsupported(text,Collections.emptySet()));
             for(String[] pair:new String[][]{{"DXVK_HUD","dxvk.hud"},{"DXVK_ASYNC","dxvk.enableAsync"},{"DXVK_GPLASYNCCACHE","dxvk.gplAsyncCache"}})
                 if(written.contains(pair[1]))Os.unsetenv(pair[0]);
-            File cache = new File(activity.getCacheDir(), "xhyn-shaders/" + digest(rendererCacheIdentity(activity,cfg) + ":" + driverKey(cfg) + ":" + Build.FINGERPRINT));
-            if (!cache.isDirectory() && !cache.mkdirs()) throw new IOException("Cannot prepare shader cache");
+            String driver = driverKey(cfg);
+            String renderer = rendererId(activity, cfg);
+            String rendererArchive = rendererHash(activity, cfg);
+            String rendererIdentity = rendererCacheIdentity(activity, renderer, rendererArchive);
+            File cache = XhynV02ShaderCaches.open(activity, digest(rendererIdentity + ":" + driver + ":" + Build.FINGERPRINT));
             Os.setenv("DXVK_STATE_CACHE_PATH", cache.getAbsolutePath(), true);
             Os.setenv("DXVK_SHADER_CACHE_PATH", cache.getAbsolutePath(), true);
             Os.setenv("MESA_SHADER_CACHE_DIR", new File(cache, "mesa").getAbsolutePath(), true);
@@ -213,7 +254,7 @@ public final class XhynV02Runtime {
                 applied=false;
                 warning+=(warning.isEmpty()?"":"\n")+"Graphics overrides were not applied: "+invalidOverrides.getMessage()+". The game's settings file was left intact.";
             }
-            begin(activity, cfg, text, cache, applied,skipOverrides);
+            begin(activity, cfg, text, cache, applied, skipOverrides, driver, renderer, rendererArchive, rendererIdentity);
             if(!warning.isEmpty()) {
                 XhynV02Config.write(new File(session,"setup-warning.txt"),warning);
                 activity.runOnUiThread(()->android.widget.Toast.makeText(activity,"Some graphics overrides could not be applied. See Diagnostics for details.",android.widget.Toast.LENGTH_LONG).show());
@@ -234,14 +275,22 @@ public final class XhynV02Runtime {
                 .putString("skipDxvkOverridesOnce",root.getAbsolutePath()).apply();
     }
 
-    private static String rendererHash(RuntimeConfig cfg) throws Exception {
+    private static String rendererHash(Context context, RuntimeConfig cfg) throws Exception {
         if (!"custom".equals(cfg.get("dxvk", "source", "builtin"))) return "builtin";
-        File file = new File(cfg.dxvk, cfg.get("dxvk", "package_zip", ""));
-        if (!file.getCanonicalFile().getParentFile().equals(cfg.dxvk.getCanonicalFile())) throw new IOException("DXVK package must be inside Dxvk");
-        return hash(file);
+        String name = cfg.get("dxvk", "package_zip", "");
+        File file = new File(cfg.dxvk, name);
+        try {
+            if (!file.getCanonicalFile().getParentFile().equals(cfg.dxvk.getCanonicalFile())) throw new IOException("DXVK package must be inside Dxvk");
+            return XhynV02ArchiveIdentity.hash(context, file, "renderer");
+        } catch (IOException unavailable) {
+            // The original renderer manager owns fallback and archive admission.
+            return "unavailable-" + digest(name);
+        }
     }
 
-    private static void begin(Context context, RuntimeConfig cfg, String text, File cache, boolean graphicsApplied, boolean skipOverrides) throws Exception {
+    private static void begin(Context context, RuntimeConfig cfg, String text, File cache, boolean graphicsApplied,
+                              boolean skipOverrides, String driver, String renderer, String rendererArchive,
+                              String rendererIdentity) throws Exception {
         sessionId = System.currentTimeMillis() + "-" + android.os.Process.myPid() + "-" + UUID.randomUUID().toString().substring(0, 8);
         session = new File(context.getFilesDir(), "xhyn-sessions/" + sessionId);
         if (!session.mkdirs()) throw new IOException("Cannot create session report");
@@ -258,23 +307,19 @@ public final class XhynV02Runtime {
         details.put("session", sessionId).put("pid", android.os.Process.myPid()).put("start_ms", System.currentTimeMillis())
                 .put("version", context.getPackageManager().getPackageInfo(context.getPackageName(),0).versionName)
                 .put("fingerprint", Build.FINGERPRINT).put("model", Build.MANUFACTURER + " " + Build.MODEL)
-                .put("requested_driver", driverKey(cfg)).put("renderer_source", cfg.get("dxvk", "source", "builtin"))
-                .put("renderer_id", rendererId(context,cfg)).put("renderer_zip_hash", rendererHash(cfg)).put("renderer_cache_identity",rendererCacheIdentity(context,cfg))
+                .put("requested_driver", driver).put("renderer_source", cfg.get("dxvk", "source", "builtin"))
+                .put("renderer_id", renderer).put("renderer_zip_hash", rendererArchive).put("renderer_cache_identity", rendererIdentity)
                 .put("cache", cache.getAbsolutePath()).put("graphics_applied", graphicsApplied)
                 .put("skipped_saved_dxvk_once",skipOverrides)
                 .put("recording_requested",cfg.getBoolean("performance","capture",false))
                 .put("frame_generation",frameGeneration).put("render_fps_cap",renderCap)
                 .put("generated_output_target",frameGeneration?StableFrameProfile.target(cfg):0)
                 .put("performance_hints",cfg.getBoolean("xhyn","performance_hints",false))
+                .put("sustained_performance_requested",cfg.getBoolean("xhyn","sustained_performance",false))
+                .put("sustained_performance_supported",XhynV02Display.supportsSustained(context))
                 .put("scope", "Current attempt only; a prior driver probe is a separate record");
         XhynV02Config.write(new File(session, "session.json"), details.toString(2));
-        try(InputStream input=context.getAssets().open("xhyn-build-identity.json")){
-            ByteArrayOutputStream bytes=new ByteArrayOutputStream();byte[] buffer=new byte[8192];int count;
-            while((count=input.read(buffer))!=-1){if(bytes.size()+count>131072)throw new IOException("Build identity exceeds limit");bytes.write(buffer,0,count);}
-            XhynV02Config.write(new File(session,"packaged-build-identity.json"),bytes.toString("UTF-8"));
-        }catch(IOException unavailable){XhynV02Config.write(new File(session,"packaged-build-identity-unavailable.txt"),"Build identity was unavailable; the game was not blocked.\n");}
         snapshotSettings(XhynV02Graphics.settings(new File(cfg.root, "save")), new File(session, "applied-settings.xml"));
-        XhynV02Config.write(new File(session,"measurement-notes.txt"),"settings.xml records requested game settings after applying overrides; swapchain dimensions are output size and do not prove actual scene render-target size. PSS, managed/native heap, Vulkan allocations and driver budgets overlap and must not be added. Pipeline creation time is summed across concurrent calls and is not elapsed frame-stall time. Compare the same scene twice with unchanged settings to distinguish first-run shader work from repeat-run behavior.\n");
         XhynV02Config.write(new File(session, "effective-dxvk.conf"), text);
         snapshotSettings(cfg.file, new File(session, "android.ini"));
         JSONObject logs = new JSONObject();
@@ -296,6 +341,26 @@ public final class XhynV02Runtime {
         context.getSharedPreferences("xhyn-v02", 0).edit().putString("lastSession", sessionId).apply();
         XhynV02Launch.bind(context,sessionId,session);
         if (cfg.getBoolean("performance", "capture", false)) startCapture(context.getApplicationContext(), cfg);
+        Context app = context.getApplicationContext();
+        File report = session;
+        String cacheLabel = renderer + " / " + selectedDriver(cfg);
+        REPORT_IO.execute(() -> completeOptionalReport(app, report, cache, cacheLabel));
+    }
+
+    private static void completeOptionalReport(Context context, File report, File cache, String cacheLabel) {
+        try {
+            if (report.isDirectory()) {
+                JSONObject identity = assetJson(context, "xhyn-build-identity.json");
+                XhynV02Config.write(new File(report, "packaged-build-identity.json"), identity.toString(2));
+                XhynV02Config.write(new File(report, "measurement-notes.txt"),
+                        "settings.xml records requested graphics settings; swapchain dimensions are output size. "
+                        + "PSS, heap, Vulkan allocations and driver budgets overlap. "
+                        + "Summed pipeline creation time includes concurrent requests. "
+                        + "Compare the same route and settings across first and repeat runs.\n");
+            }
+        } catch (Exception unavailable) { Log.w("XHYN V", "Optional build identity unavailable", unavailable); }
+        try { XhynV02ShaderCaches.maintain(context, cache, cacheLabel); }
+        catch (Exception unavailable) { Log.w("XHYN V", "Could not manage inactive shader caches", unavailable); }
     }
 
     private static void snapshotSettings(File source, File destination) {
@@ -329,6 +394,7 @@ public final class XhynV02Runtime {
                 throw new IOException("The effective DXVK configuration changed during launch");
             if (!XhynV02Native.install(activity.getFilesDir().getAbsolutePath(), sessionId)) throw new IOException("The engine error handler could not be installed");
             RuntimeConfig cfg=config();XhynV02FrameHints.initialize(activity);
+            recordLoadedGraphics(activity, cfg);
             boolean captureRequested=cfg.getBoolean("performance","capture",false);
             boolean hints=cfg.getBoolean("xhyn","performance_hints",false);
             int target=StableFrameProfile.framegen(cfg)?StableFrameProfile.target(cfg):effectiveFrameLimit(activity,cfg);
@@ -442,12 +508,6 @@ public final class XhynV02Runtime {
         if (!file.delete() && file.exists()) throw new IOException("Cannot delete " + file.getName());
     }
 
-    public static void clearCaches(Context context) throws Exception {
-        if (GTAVActivity.isGameRunning()) throw new IOException("Close the game before clearing shader caches");
-        File root = context.getCacheDir(); File owned = new File(root, "xhyn-shaders");
-        if (owned.exists()) removeTree(owned, root);
-    }
-
     public static String lastError(Context context) {
         try {
             String value = XhynV02Config.read(new File(context.getFilesDir(), "xhyn-native-error.txt"));
@@ -479,8 +539,13 @@ public final class XhynV02Runtime {
         String source=lastError(context)+"\n"+startupError(context);
         String id=context.getSharedPreferences("xhyn-v02",0).getString("lastSession","");
         if(id.matches("[A-Za-z0-9-]{1,100}"))try{
-            Map<String,String> settings=XhynV02Config.globals(XhynV02Config.read(new File(context.getFilesDir(),"xhyn-sessions/"+id+"/effective-dxvk.conf")));
+            File report = new File(context.getFilesDir(), "xhyn-sessions/" + id);
+            Map<String,String> settings=XhynV02Config.globals(XhynV02Config.read(new File(report,"effective-dxvk.conf")));
             source+="\nfeature_limit="+settings.getOrDefault("d3d11.maxFeatureLevel","");
+            if (source.contains("0x2f84a8ed")) {
+                String evidence = currentGraphicsLog(report);
+                if (!XhynV02Advice.featureLevelFailure(evidence).isEmpty()) source += "\n" + evidence;
+            }
         }catch(Exception unavailable){}
         if(id.matches("[A-Za-z0-9-]{1,100}"))try{
             JSONObject metrics=new JSONObject(XhynV02Config.read(new File(context.getFilesDir(),"xhyn-sessions/"+id+"/graphics-metrics.json")));
@@ -489,6 +554,15 @@ public final class XhynV02Runtime {
         }catch(Exception unavailable){}
         String stage=launch.optString("last_phase","");
         return XhynV02Advice.explain(source)+(stage.isEmpty()?"":"\n\nLast launch stage: "+stage+".");
+    }
+    private static String currentGraphicsLog(File report) throws Exception {
+        JSONObject snapshots = new JSONObject(XhynV02Config.read(new File(report, "log-start.json")));
+        String snapshot = snapshots.optString("gtav_tty.log", "");
+        if (!snapshot.startsWith("v2:")) return "";
+        File gameRoot = new File(XhynV02Config.read(new File(report, "game-root.txt")));
+        File log = new File(gameRoot, "gtav_tty.log");
+        long started = new JSONObject(XhynV02Config.read(new File(report, "session.json"))).getLong("start_ms");
+        return new String(XhynV02LogSlice.current(log, snapshot, started, 128 * 1024), StandardCharsets.UTF_8);
     }
     private static void lifecycle(String event){
         File report=session;if(report==null)return;
@@ -499,11 +573,13 @@ public final class XhynV02Runtime {
     }
     public static void resumeGame(Activity activity){
         lifecycle("resume");
+        XhynV02Display.sustain(activity, config());
         XhynV02Display.apply(activity);XhynV02FrameHints.resume();try{XhynV02Native.paused(false);}catch(LinkageError ignored){}
     }
     public static void pauseGame(Activity activity){
         lifecycle("pause");
         try{XhynV02Native.paused(true);}catch(LinkageError ignored){}XhynV02FrameHints.pause();XhynV02Display.release(activity);
+        XhynV02Display.sustain(activity, null);
     }
     public static void surface(android.view.View view){if(view.getContext() instanceof Activity)XhynV02Display.apply((Activity)view.getContext());}
 
@@ -530,6 +606,7 @@ public final class XhynV02Runtime {
     }
     public static void gameStopped() {
         XhynV02FrameHints.pause();
+        XhynV02ShaderCaches.release();
         synchronized(LOCK) { if(capture!=null) stopCapture(config().root); }
     }
     private XhynV02Runtime() {}

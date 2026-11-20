@@ -130,6 +130,14 @@ with zipfile.ZipFile(original) as a,zipfile.ZipFile(final) as b,final.open('rb')
                 for method in cls.get_methods() if method.get_code()}
     protected='Lcom/gtavsource/android/ProtectedArtwork;'
     check(instructions(oc[protected])==instructions(nc[protected]),'Original artwork authentication code unchanged')
+    lan_transport = 'Lcom/gtavsource/android/lan/LanTransport;'
+    original_transport = instructions(oc[lan_transport])
+    final_transport = instructions(nc[lan_transport])
+    wire_methods = [name for name in original_transport if name.startswith(
+        ('encodeWithMac(', 'statePacketsWithMac(', 'parseOffer('))]
+    check(len(wire_methods) == 3, 'LAN wire serializer targets found')
+    for name in wire_methods:
+        check(original_transport[name] == final_transport[name], 'LAN wire behavior preserved ' + name)
     # Interface-only build stubs must never replace the original implementations.
     for name in ['RuntimeConfig','GTAVActivity','GameMenuActivity','DriverManager','StableFrameProfile']:
         key='Lcom/gtavsource/android/'+name+';'

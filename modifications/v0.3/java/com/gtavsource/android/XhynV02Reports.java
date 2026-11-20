@@ -34,7 +34,10 @@ public final class XhynV02Reports {
         File out = new File(context.getCacheDir(), "xhyn-last-session.zip");
         try (ZipOutputStream zip = new ZipOutputStream(new FileOutputStream(out))) {
             addText(zip, "README.txt", "XHYN V 0.3 session " + id + "\nSession files identify one attempt. Prior driver readiness results are explicitly separate.\nNative guards prevent specific invalid calls; they do not establish the cause of audio corruption.\nMissing script native/API errors require matching scripts and engine interfaces. Vulkan device loss requires driver/device investigation.\nNo automatic upload. Paths and device details may be included; review before sharing.\n");
-            File[] files = session.listFiles(); if (files != null) for (File file : files) if (file.isFile()) add(zip, "session/" + file.getName(), file, 2 * 1024 * 1024);
+            File[] files = session.listFiles();
+            if (files != null) for (File file : files) {
+                if (file.isFile() && !file.getName().startsWith(".")) add(zip, "session/" + file.getName(), file, 2 * 1024 * 1024);
+            }
             addText(zip,"session/measurement-guide.txt","Driver initialization and Config/driver-status.txt may contain startup-only BC counters. When recording is enabled, driver-runtime-latest.txt is a timestamped later snapshot, not necessarily the instant of a crash. Recording changes measurement overhead. Compare runs with it both on and off. The basic optional graphics check is not a game/BC-copy qualification.\n");
             try{addText(zip,"session/recording-comparison.txt",XhynV02Comparison.make(session));}catch(Exception unavailable){addText(zip,"session/recording-comparison.txt","No comparable recording is available.\n");}
             String error = XhynV02Runtime.lastError(context);

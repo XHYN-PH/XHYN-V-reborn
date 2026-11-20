@@ -10,24 +10,30 @@ import java.util.zip.*;
 
 /** Admission checks for Android Vulkan packages; filenames never establish GPU support. */
 public final class XhynV02DriverPackage {
-    private static final int MAX = 128 * 1024 * 1024;
+    static final int MAX = 128 * 1024 * 1024;
     public static void validate(File file, int api, long page) throws Exception {
+        validate(file, api, page, () -> { });
+    }
+    static void validate(File file, int api, long page, Runnable check) throws Exception {
+        check.run();
         if (!file.isFile() || file.length() > MAX || Files.isSymbolicLink(file.toPath())) throw new IOException("Invalid or oversized driver ZIP");
         try (ZipFile zip = new ZipFile(file)) {
             Set<String> names = new HashSet<>(); long total = 0; int count = 0; JSONObject meta = null;
             ZipEntry metadata = zip.getEntry("meta.json");
             if (metadata == null) throw new IOException("Driver needs an AdrenoTools-format meta.json. Desktop drivers and OpenGL packages cannot be used.");
-            meta = new JSONObject(new String(read(zip, metadata, 65536), StandardCharsets.UTF_8));
-            if (meta.optInt("schemaVersion", -1) != 1 || meta.optInt("minApi", -1) < 0 || meta.getInt("minApi") > api) throw new IOException("Driver metadata or Android API requirement is incompatible");
+            meta = new JSONObject(new String(read(zip, metadata, 65536, check), StandardCharsets.UTF_8));
+            if (meta.optInt("schemaVersion", -1) != 1 || meta.optInt("minApi", -1) < 0) throw new IOException("Invalid driver metadata version or missing Android requirement");
+            if (meta.getInt("minApi") > api) throw new IOException("This driver requires Android API " + meta.getInt("minApi") + ". This device has API " + api + ".");
             String library = meta.optString("libraryName");
             if (!library.matches("[A-Za-z0-9_.+-]+\\.so") || zip.getEntry(library) == null) throw new IOException("Driver entry library is missing");
             Enumeration<? extends ZipEntry> entries = zip.entries();
             while (entries.hasMoreElements()) {
+                check.run();
                 ZipEntry entry = entries.nextElement(); String name = entry.getName();
                 if (++count > 512 || !names.add(name) || name.startsWith("/") || name.contains("\\") || Arrays.asList(name.split("/", -1)).contains("..") || name.indexOf('\0') >= 0) throw new IOException("Unsafe or duplicate driver ZIP path");
                 if (entry.isDirectory()) continue;
                 if (name.toLowerCase(Locale.ROOT).endsWith(".dll")) throw new IOException("Windows drivers cannot run on Android");
-                byte[] data = read(zip, entry, MAX);
+                byte[] data = read(zip, entry, (int)(MAX - total), check);
                 total += data.length; if (total > MAX) throw new IOException("Expanded driver exceeds 128 MiB");
                 if (name.endsWith(".so") || name.contains(".so.")) validateElf(data, page);
                 if (name.equals(library) && !contains(data, "vkGetInstanceProcAddr")) throw new IOException("Entry library does not expose a Vulkan loader interface");
@@ -42,10 +48,10 @@ public final class XhynV02DriverPackage {
         } catch (Exception failure) { throw new IOException("Vulkan driver package rejected: " + failure.getMessage(), failure); }
     }
     public static void checkPrepare(File directory, String name, File ignored, int api) throws IOException { beforePrepare(directory, name, api); }
-    private static byte[] read(ZipFile zip, ZipEntry entry, int limit) throws Exception {
+    private static byte[] read(ZipFile zip, ZipEntry entry, int limit, Runnable check) throws Exception {
         if (entry.getSize() > limit) throw new IOException("Driver ZIP entry is too large");
         try (InputStream in = zip.getInputStream(entry); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            byte[] bytes = new byte[65536]; int count; while ((count = in.read(bytes)) != -1) { if (out.size() + count > limit) throw new IOException("Driver ZIP entry is too large"); out.write(bytes,0,count); } return out.toByteArray();
+            byte[] bytes = new byte[65536]; int count; while ((count = in.read(bytes)) != -1) { check.run(); if (out.size() + count > limit) throw new IOException("Expanded driver exceeds the size limit"); out.write(bytes,0,count); } return out.toByteArray();
         }
     }
     static boolean contains(byte[] bytes, String text) {

@@ -1,8 +1,14 @@
 # Modification-source layout
 
+## 0.3 Preview 4
+
+The current build uses the exact **1.7.57** Android base. The guide lists the required input checksum, pinned tools, build command, and signing options. [Preview 4 build guide](https://github.com/XHYN-PH/XHYN-V-reborn/blob/v0.3-preview4/modifications/v0.3/README.md)
+
+The release page includes the public modification source and its checksums. A signed update needs the project's existing release key. [Preview 4 release](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.3-preview4)
+
 ## 0.2
 
-The current [0.2 source](../modifications/v0.2/README.md) includes the complete exact-base build driver, Java/C helpers, shaders, patches and checks. It targets 1.7.26 and requires NDK r27c alongside the pinned Java/Android tools. Hotfix 2 also requires the pinned Robolectric/JUnit classpath and Enjarify checkout, and runs launcher-view tests before packaging. Native observer forwarding, concurrency, ASan/UBSan and ARM64 trampoline checks also run before packaging. The added profileable manifest entry permits developer CPU profiling on supported devices. See its [implementation status](../modifications/v0.2/STATUS.md) for device-testing limits.
+The [0.2 source](../modifications/v0.2/README.md) includes the exact-base build driver, Java/C helpers, shaders, patches and checks. It targets 1.7.26 and requires NDK r27c alongside the pinned Java/Android tools. Hotfix 2 also requires the pinned Robolectric/JUnit classpath and Enjarify checkout, and runs launcher-view tests before packaging. Native observer forwarding, concurrency, ASan/UBSan and ARM64 trampoline checks also run before packaging. The added profileable manifest entry permits developer CPU profiling on supported devices. See its [implementation status](../modifications/v0.2/STATUS.md) for device-testing limits.
 
 ## 1.7.4 English test build
 

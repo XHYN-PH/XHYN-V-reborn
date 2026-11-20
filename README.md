@@ -4,9 +4,9 @@
 
 **XHYN V brings GTA V to Android with touch controls, graphics and driver settings, and a Story Mode trainer.** Maintained by **XHYN-PH**, this edition brings setup and performance controls together so you can adjust the game for your device.
 
-**[Download XHYN V 0.3 Preview 3 Hotfix 1](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.3-preview3-hotfix1)** · **[Telegram](https://t.me/xhynv)** · **[YouTube](https://youtube.com/@xhyn_ph)** · **[Buy GTA V](https://store.rockstargames.com/game/buy-gta-v)**
+**[Download XHYN V 0.3 Preview 4](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.3-preview4)** · **[Telegram](https://t.me/xhynv)** · **[YouTube](https://youtube.com/@xhyn_ph)** · **[Buy GTA V](https://store.rockstargames.com/game/buy-gta-v)**
 
-> **Untested development preview:** gameplay, live multiplayer and Bridge VPN behavior have not been verified on physical devices. Compatibility and performance vary; native crash fixes remain incomplete.
+> **Development preview.** Gameplay, GPU compatibility, and live multiplayer still need testing on phones.
 
 ## What does this project provide?
 
@@ -35,6 +35,15 @@ Android/SDL → ARM64 game engine
 
 XHYN V is therefore **a native ARM64 Android port with graphics API translation where needed**. We build on the original Android port and maintain this edition's improvements. Native execution does not imply that every rendering path was rewritten directly for Vulkan or that the complete engine source is public.
 
+## 0.3 Preview 4
+
+- See the loaded and next-launch driver and renderer. Import driver ZIPs with progress and cancellation, and manage individual shader caches.
+- Align touch controls to a grid, show safe-area guides, and test controller sticks and buttons.
+- Check LAN host, connection type, build, and local mods. Measure traffic from the LAN page.
+- Fixed a launch failure caused by large settings files. Supported phones can opt into sustained performance mode.
+
+[Release notes](docs/releases/0.3-preview4.md)
+
 ## 0.3 Preview 3 Hotfix 1
 
 - Fixed the Preview 3 startup crash that could close the game as soon as it launches.
@@ -45,7 +54,7 @@ XHYN V is therefore **a native ARM64 Android port with graphics API translation 
 
 ## 0.3 Preview 3
 
-- Fixed an SDL startup failure that could occur when retrying a game launch.
+- Added SDL launch retry handling. Hotfix 1 repairs the startup regression introduced in Preview 3.
 - Startup reports show the first error and the last stage reached.
 - Recording History shows frame timings, long gaps, memory use, and screen refresh when available.
 - Refresh matching returns control to Android when the option is off or the frame rate is uncapped.
@@ -64,7 +73,7 @@ XHYN V is therefore **a native ARM64 Android port with graphics API translation 
 
 ## 0.3 feature changelog
 
-The following base features and XHYN modifications were introduced in Preview 1 and carried forward into Preview 3.
+The following base features and XHYN modifications were introduced in Preview 1 and carried forward into Preview 4.
 
 ### What's new in the 1.7.57 base
 
@@ -84,7 +93,7 @@ This is custom Story Mode/free-roam multiplayer. Mission progress is not shared.
 - Applied the **XHYN V** name, transparent repository logo and English presentation to the new launcher, LAN/theme pages, trainer and messages. No Chinese system-language setting is required.
 - Kept **Display**, **Performance**, **DXVK**, **Vulkan Drivers**, **Theme**, **LAN** and **System** navigation separate. About remains inside System, below Game Resources, with Telegram, YouTube and GitHub links.
 - Preserved the **0–100% render scale**, graphics-quality resets, population/distance controls, rendered FPS cap, VSync and refresh options. Zero scale restores recorded game dimensions; positive scales keep a 320 × 180 minimum.
-- Brought forward renderer-specific **DXVK tuning** for reported VRAM, shared memory, allocation budget, compiler workers, caches, filtering and compatibility options. Help buttons explain the tradeoffs. [Tuning guide](https://github.com/XHYN-PH/XHYN-V-reborn/blob/v0.3-preview3-hotfix1/modifications/v0.3/DXVK-TUNING.md).
+- Brought forward renderer-specific **DXVK tuning** for reported VRAM, shared memory, allocation budget, compiler workers, caches, filtering and compatibility options. Help buttons explain the tradeoffs. [Tuning guide](https://github.com/XHYN-PH/XHYN-V-reborn/blob/v0.3-preview4/modifications/v0.3/DXVK-TUNING.md)
 - Kept tuning buttons, the editor and effective **dxvk.conf** synchronized. Consolidated the base's separate memory controls so a hidden override cannot silently replace these values.
 - Retained one main Vulkan driver picker, experimental PanVK/Mali and Xclipse paths, and Turnip GMEM/SYSMEM plus One UI controls scoped to the appropriate driver. No universal GPU-support claim is made.
 - Kept frame generation **off by default** on fresh installations and added clearer baseline/compatibility advice.
@@ -96,15 +105,15 @@ This is custom Story Mode/free-roam multiplayer. Mission progress is not shared.
 - Added the separate **XHYN V Bridge 0.1.0** companion: English UI, native network messages, notifications and widgets; XHYN branding; compatible Astral room links; and connection tips. The networking backend is preserved. Room credentials are omitted from the server-start log.
 - Kept the game's existing application ID and signing key so this preview can update the previous English edition. Bridge has its own application ID and installs separately.
 
-**Untested gameplay preview:** physical-device gameplay, GPU behavior, live two-device multiplayer and Bridge VPN connections have not been tested. Expect possible crashes, disconnects or synchronization problems. The [detailed implementation status](https://github.com/XHYN-PH/XHYN-V-reborn/blob/v0.3-preview3-hotfix1/modifications/v0.3/STATUS.md) explains what changed and which native issues remain open.
-
 ## Requirements and installation
 
 - **Android 11 or newer**, an **ARM64** device and a compatible **Vulkan** driver.
 - Your own compatible **GTA V Legacy** files, including English text and fonts. The project's documented baseline is **1.61 / build 2699**.
 - Enough storage for the game, caches and imported content.
 
-1. Download and install the APK from the [release page](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.3-preview3-hotfix1).
+Keep frame generation off on phones that use **16 KB memory pages**. The bundled frame-generation libraries still include 4 KB-aligned binaries. [Android page-size guide](https://developer.android.com/guide/practices/page-sizes)
+
+1. Download and install the APK. [Preview 4 release](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.3-preview4)
 2. Grant the requested file access and select the folder containing `common.rpf`, `x64` and `update`.
 3. Use **Display** for graphics, **Performance** for FPS, **Vulkan Drivers** for drivers, **DXVK** for configuration and **System → Diagnostics** for reports. Start with System Vulkan and lower settings if your device struggles.
 4. Fully close and reopen the game after changing its driver, renderer or graphics settings. Graphics-file overrides take effect once the game has created `save/settings.xml`.
@@ -114,9 +123,9 @@ compatibility limit is experimental and may prevent startup; restore Default or
 DX11 if that happens. It still uses DXVK/Vulkan. Higher reported VRAM does not
 add memory, and experimental overrides are not guaranteed performance boosts.
 
-The [improvement status](https://github.com/XHYN-PH/XHYN-V-reborn/blob/v0.3-preview3-hotfix1/modifications/v0.3/STATUS.md) separates completed changes from native heap, resource-cleanup and BC texture work that still needs matching source and device investigation.
+The native heap, resource cleanup, and texture-copy issues still need matching source and device investigation. [Implementation status](https://github.com/XHYN-PH/XHYN-V-reborn/blob/v0.3-preview4/modifications/v0.3/STATUS.md)
 
-Version 0.3 Preview 3 Hotfix 1 is a **development prerelease**, using the same app ID and release key as our previous English edition so it can install as an update. Device gameplay and GPU compatibility still need testing. Earlier editions with different app IDs remain separate installations.
+Preview 4 uses the same app ID and release key as Preview 3 Hotfix 1, so it installs as an update. Earlier editions with different app IDs install separately.
 
 ## Multiplayer guide
 
@@ -140,7 +149,7 @@ Version 0.3 Preview 3 Hotfix 1 is a **development prerelease**, using the same a
 
 ### Play remotely with XHYN V Bridge
 
-1. Install **XHYN V Bridge** from the [Bridge download](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.3-preview2) on each phone. It is a separate app from the game.
+1. Install the separate **XHYN V Bridge 0.1.0** app on each phone. [Download Bridge APK](https://github.com/XHYN-PH/XHYN-V-reborn/releases/download/v0.3-preview2/XHYN-V-Bridge-0.1.0.apk)
 2. Create/share or import the **same Bridge room/network** on every phone. Use matching network credentials and compatible enabled server settings.
 3. Tap **Connect**, accept Android's VPN request and wait until Bridge shows a connected state and a **virtual IPv4 address**. Keep Bridge running when you switch to the game.
 4. In XHYN V, the host opens **Create room** and enables **Virtual LAN**. Other players enable it on **Join room** too.
@@ -220,7 +229,7 @@ Earlier builds were also development releases. Their changelogs do not establish
 
 ## Source and credits
 
-We publish [our 0.3 helper classes, native helper, patches, build tools and tests](https://github.com/XHYN-PH/XHYN-V-reborn/tree/v0.3-preview3-hotfix1/modifications/v0.3), with **MIT licensing** for newly written game-modification code under its [defined scope](https://github.com/XHYN-PH/XHYN-V-reborn/blob/v0.3-preview3-hotfix1/modifications/v0.3/PROVENANCE.md). This is the source for our modification layer. Original engine and launcher code remain subject to their own terms and are not published here. The earlier [1.7.4 English layer](modifications/english-1.7.4) remains available.
+We publish [our 0.3 helper classes, native helper, patches, build tools and tests](https://github.com/XHYN-PH/XHYN-V-reborn/tree/v0.3-preview4/modifications/v0.3), with **MIT licensing** for newly written game-modification code under its [defined scope](https://github.com/XHYN-PH/XHYN-V-reborn/blob/v0.3-preview4/modifications/v0.3/PROVENANCE.md). This is the source for our modification layer. Original engine and launcher code remain subject to their own terms and are not published here. The earlier [1.7.4 English layer](modifications/english-1.7.4) remains available.
 
 [Bridge source changes](https://github.com/XHYN-PH/XHYN-V-reborn/tree/v0.3-preview2/modifications/bridge) are available separately under Astral's **PolyForm Noncommercial** terms. They are not covered by the game helper layer's MIT license. Its original notices and dependencies remain credited inside the app.
 

@@ -243,6 +243,94 @@ public class LauncherUiChecks {
             assertTrue(find(root(),"System").isClickable());
         }
     }
+    @Test public void graphicsScreenDistinguishesFallbackFromNextSelection() throws Exception {
+        org.json.JSONObject last = new org.json.JSONObject()
+                .put("root", activity.config.root.getCanonicalPath())
+                .put("renderer", "Built-in DXVK loaded")
+                .put("driver", "System Vulkan fallback");
+        XhynV02Config.write(new File(activity.getFilesDir(), "xhyn-loaded-graphics.json"), last.toString());
+        activity.config.put("vulkan", "driver", "custom");
+        activity.config.put("vulkan", "driver_zip", "test-driver.zip");
+        activity.config.save();
+        page(1);
+        String contents = texts(activity.content);
+        assertTrue(contents.contains("Last loaded\nBuilt-in DXVK loaded\nSystem Vulkan fallback"));
+        assertTrue(contents.contains("Next launch") && contents.contains("Imported driver · test-driver.zip"));
+    }
+
+    @Test public void editedArchiveDoesNotReuseThePreviousIdentity() throws Exception {
+        Path file = Files.createTempFile(ROOT, "package-", ".zip");
+        Files.writeString(file, "first");
+        String before = XhynV02ArchiveIdentity.hash(activity, file.toFile(), "test");
+        assertEquals(before, XhynV02ArchiveIdentity.hash(activity, file.toFile(), "test"));
+        Files.writeString(file, "other");
+        assertNotEquals(before, XhynV02ArchiveIdentity.hash(activity, file.toFile(), "test"));
+    }
+
+    @Test public void driverPickerRejectsDamagedZipWithoutChangingTheSelectedDriver() throws Exception {
+        activity.config.put("vulkan", "driver", "custom");
+        activity.config.put("vulkan", "driver_zip", "already-installed.zip");
+        activity.config.save();
+        Path bad = Files.createTempFile(ROOT, "damaged-", ".zip");
+        Files.writeString(bad, "not a ZIP archive");
+        ReflectionHelpers.callInstanceMethod(activity, "handlePicked", ClassParameter.from(int.class, 0x15),
+                ClassParameter.from(List.class, Collections.singletonList(android.net.Uri.fromFile(bad.toFile()))));
+        XhynV02DriverImport job = ReflectionHelpers.getField(activity.xhynSettings, "driverImport");
+        long until = System.nanoTime() + java.util.concurrent.TimeUnit.SECONDS.toNanos(5);
+        while (job.running() && System.nanoTime() < until) Thread.sleep(10);
+        assertFalse("Import worker finished", job.running());
+        assertEquals("already-installed.zip", RuntimeConfig.load(activity.config.root).get("vulkan", "driver_zip", ""));
+        String[] remaining = activity.config.drivers.list();
+        assertNotNull(remaining);
+        assertEquals("No incomplete archive installed", 0, remaining.length);
+    }
+
+    @Test public void shaderCachesOnlyRemoveTheSelectedInactiveDirectory() throws Exception {
+        File first = XhynV02ShaderCaches.open(activity, "a".repeat(64));
+        File second = XhynV02ShaderCaches.open(activity, "b".repeat(64));
+        try {
+            XhynV02ShaderCaches.maintain(activity, second, "System Vulkan");
+            assertTrue(XhynV02ShaderCaches.list(activity).stream().anyMatch(cache -> cache.label.equals("System Vulkan")));
+            assertThrows(IOException.class, () -> XhynV02ShaderCaches.clear(activity, second.getName()));
+            XhynV02ShaderCaches.clear(activity, first.getName());
+            assertFalse(first.exists());
+            assertTrue(second.isDirectory());
+        } finally { XhynV02ShaderCaches.release(); }
+    }
+
+    @Test public void touchGridAndControllerTestUseTheExistingUi() {
+        View canvas = new View(activity);
+        LinearLayout toolbar = MenuStyle.row(activity);
+        XhynV02Controls.editorTools(activity, toolbar, canvas);
+        assertEquals(0.173f, XhynV02Controls.snap(canvas, 0.173f), 0.0001f);
+        toolbar.getChildAt(0).performClick();
+        View panel = dialog().getWindow().getDecorView();
+        assertNotNull(find(panel, "Snap controls to grid"));
+        Switch toggle = switchIn(panel);
+        assertNotNull(toggle);
+        toggle.setChecked(true);
+        assertEquals(0.15f, XhynV02Controls.snap(canvas, 0.173f), 0.0001f);
+        dialog().dismiss();
+        page(2);
+        XhynV02Controls.appendControllerTest(activity);
+        clickRow("Controller test");
+        assertNotNull(find(dialog().getWindow().getDecorView(), "Test dead zone · 15%"));
+    }
+
+    private static Switch switchIn(View view) {
+        if (view instanceof Switch) return (Switch)view;
+        if (view instanceof ViewGroup) for (int i = 0; i < ((ViewGroup)view).getChildCount(); i++) {
+            Switch nested = switchIn(((ViewGroup)view).getChildAt(i));
+            if (nested != null) return nested;
+        }
+        return null;
+    }
+
+    @Test public void lanDetailsShowTheCurrentProtocol() {
+        page(22);
+        clickRow("LAN room details");
+        assertTrue(texts(dialog().getWindow().getDecorView()).contains("LAN protocol 14"));
+    }
     @Test public void selectionUsesThemedDialogAndUpdatesItsCurrentValue(){
         page(0);activity.content.findViewWithTag("xhyn-setting-vsync").performClick();shadowOf(Looper.getMainLooper()).idle();AlertDialog dialog=(AlertDialog)org.robolectric.shadows.ShadowDialog.getLatestDialog();assertNotNull(dialog);
         dialog.getListView().performItemClick(dialog.getListView().getAdapter().getView(1,null,dialog.getListView()),1,1);shadowOf(Looper.getMainLooper()).idle();

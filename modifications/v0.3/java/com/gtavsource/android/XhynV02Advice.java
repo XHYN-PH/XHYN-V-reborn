@@ -1,11 +1,36 @@
 package com.gtavsource.android;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /** Explanations from observed errors; absence of a match is not a successful test. */
 public final class XhynV02Advice {
+    private static final Pattern FEATURE_REJECTION = Pattern.compile(
+            "Minimum required feature level D3D_FEATURE_LEVEL_([0-9]+_[0-9]+) not supported",
+            Pattern.CASE_INSENSITIVE);
+    private static final Pattern FEATURE_MAXIMUM = Pattern.compile(
+            "Maximum supported feature level: (?:D3D_FEATURE_LEVEL_)?([0-9]+(?:_[0-9]+)?)",
+            Pattern.CASE_INSENSITIVE);
+
+    static String featureLevelFailure(String log) {
+        Matcher required = FEATURE_REJECTION.matcher(log);
+        if (!required.find()) return "";
+        Matcher maximum = FEATURE_MAXIMUM.matcher(log).region(0, required.start());
+        String supported = "Unavailable";
+        while (maximum.find()) supported = maximum.group(1).replace('_', '.');
+        String device = log.toLowerCase(Locale.ROOT).contains("xclipse")
+                ? "On Xclipse, start with System Vulkan and test a different bundled renderer with the Direct3D compatibility limit set to Default."
+                : "Try a compatible driver or a different bundled renderer with the Direct3D compatibility limit set to Default.";
+        return "DXVK could not create a Direct3D device. Required feature level "
+                + required.group(1).replace('_', '.') + " · Reported maximum " + supported
+                + (supported.equals("0") ? " (no usable feature level)" : "") + ".\n\n" + device;
+    }
+
     public static String explain(String source){
         String text=source.toLowerCase(Locale.ROOT);
         if(text.contains("0xb3e1d694")||text.contains("err_mem_embeddedalloc_guard_1"))return "The engine detected damaged memory. This is not proof that RAM ran out. Keep the report and note whether recording, frame generation or mods were active. The guard is preserved; the earlier bad write still needs investigation.";
+        String feature = featureLevelFailure(source);
+        if (!feature.isEmpty()) return feature;
         if(text.contains("0x2f84a8ed"))return "The graphics output could not be initialized. Fully close and reopen the game, try frame generation off, and check the selected driver and renderer. Save a report if it repeats. This message does not mean your game folder is invalid.";
         if(text.contains("error_code=0x00000000"))return "The engine stopped at an internal assertion without a specific error code. This is not a successful exit. Save the report, including the call stack and resource logs, so the failing subsystem can be identified.";
         if(text.contains("panvk")&&(text.contains("job fault")||text.contains("job_fault")))return "The PanVK driver reported GPU job faults. Compare the same scene with frame generation and performance hints off, then save a report. Support depends on the specific GPU and driver; this report does not qualify all Mali devices.";
