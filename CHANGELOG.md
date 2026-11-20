@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3 Preview 3 Hotfix 1 — 20 November 2026
+
+- Fixed the Preview 3 startup crash that could close the game as soon as it launches.
+- Fixed retrying a game launch after a failed library load.
+- The previous-game error dialog title now appears in English.
+
+[Download the hotfix](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.3-preview3-hotfix1)
+
 ## 0.3 Preview 3 — 19 November 2026
 
 - Fixed an SDL startup failure that could occur when retrying a game launch.

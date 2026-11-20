@@ -91,7 +91,8 @@ compatible=out/'release-jvm-compatible.jar'
 run('jvm-compatibility',['java','-cp',base_classpath,'EnjarifyJvmCompatibility',converted,compatible])
 classpath=os.pathsep.join([str(classes),str(compatible),str(args.tools_dir.resolve()/'android.jar')]+classpath)
 test=PACKAGE/'tests/ui/ApkStartupChecks.java'
-run('compile',['javac','-encoding','UTF-8','-cp',classpath,'-d',classes,test])
+sdl_test=PACKAGE/'tests/ui/SdlRetryChecks.java'
+run('compile',['javac','-encoding','UTF-8','-cp',classpath,'-d',classes,test,sdl_test])
 cache=args.classpath_file.resolve().parent/'test-home'
 runtime_jars=out/'runtime-jars'
 runtime_jars.mkdir(exist_ok=True)
@@ -102,11 +103,16 @@ for path in (cache/'.m2/repository').rglob('android-all-instrumented-*.jar'):
 result=run('application-startup',['java','--add-opens=java.base/java.io=ALL-UNNAMED',
     '-Duser.home='+str(cache),'-Dxhyn.test.apk='+str(apk),
     '-Drobolectric.offline=true','-Drobolectric.dependency.dir='+str(runtime_jars),
-    '-cp',classpath,'org.junit.runner.JUnitCore','com.gtavsource.android.ApkStartupChecks'])
+    '-cp',classpath,'org.junit.runner.JUnitCore','com.gtavsource.android.ApkStartupChecks',
+    'com.gtavsource.android.SdlRetryChecks'])
+tests=re.search(r'OK \((\d+) tests?\)',result)
+if not tests:
+    raise RuntimeError('Startup test count is missing')
 (out/'result.json').write_text(json.dumps({'result':'PASS','apk_sha256':hashlib.sha256(apk.read_bytes()).hexdigest(),
     'test_sha256':hashlib.sha256(test.read_bytes()).hexdigest(),
+    'sdl_test_sha256':hashlib.sha256(sdl_test.read_bytes()).hexdigest(),
     'jvm_compatibility_source_sha256':hashlib.sha256(compatibility.read_bytes()).hexdigest(),
-    'android_apis':[30,35], 'tests':6,
+    'android_apis':[30,35], 'tests':int(tests[1]),
     'jvm_only_adjustments':'Static-interface references and stack maps corrected in the translated host JAR; original default no-op interface versions adjusted. APK DEX is unchanged.',
     'scope':'Actual final APK Application.onCreate, artwork authentication/render, dictionary and launcher lifecycle; host Android APIs 30/35, not physical gameplay'},indent=2)+'\n')
 print(result.strip())

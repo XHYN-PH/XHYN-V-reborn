@@ -12,7 +12,8 @@ D = WORK / 'decoded'
 changes = []
 
 def path(name):
-    matches = list(D.glob('smali*/com/gtavsource/android/' + name + '.smali'))
+    relative = name if '/' in name else 'com/gtavsource/android/' + name
+    matches = list(D.glob('smali*/' + relative + '.smali'))
     assert len(matches) == 1, (name, matches)
     return matches[0]
 
@@ -98,15 +99,19 @@ def record_load_failure(old):
     throw v0
 .end method'''
 method('GTAVActivity','loadLibraries()V',record_load_failure)
-# The base sets mActivityCreated before its fallible library load. Retrying can
-# therefore reach nativeAllowRecreateActivity with no SDL native registration.
-# Load only SDL core before that branch, using its original contextual loader.
-_sdl=next(D.glob('smali*/org/libsdl/app/SDLActivity.smali'))
-_sdl_text=_sdl.read_text()
-_sdl_marker='    invoke-super {p0, p1}, Landroid/app/Activity;->onCreate(Landroid/os/Bundle;)V'
-assert _sdl_text.count(_sdl_marker)==1
-_sdl.write_text(_sdl_text.replace(_sdl_marker,_sdl_marker+'\n\n    invoke-static {p0}, Lcom/gtavsource/android/XhynV02Sdl;->beforeCreate(Landroid/content/Context;)V',1))
-changes.append('org.libsdl.app.SDLActivity->onCreate: SDL core before native recreation query')
+# Publish the first activity only after SDL's version and JNI setup succeeded.
+# A failed load can then retry through the original loader without calling JNI.
+def mark_sdl_creation_after_setup(old):
+    mark = '    sput-boolean p1, Lorg/libsdl/app/SDLActivity;->mActivityCreated:Z'
+    loaded = '    invoke-virtual {p0}, Lorg/libsdl/app/SDLActivity;->loadLibraries()V'
+    setup = '    invoke-static {}, Lorg/libsdl/app/SDL;->initialize()V'
+    mark_block = '    .line 369\n'+mark+'\n\n'
+    assert all(old.count(line)==1 for line in (mark,loaded,setup))
+    assert old.count(mark_block)==1
+    assert old.index(mark) < old.index(loaded) < old.index(setup)
+    return old.replace(mark_block,'',1).replace(setup,setup+'\n\n'+mark,1)
+
+method('org/libsdl/app/SDLActivity','onCreate(Landroid/os/Bundle;)V',mark_sdl_creation_after_setup)
 def startup_title(old):
     marker='    const-string v0, "\\u6e38\\u620f\\u76ee\\u5f55\\u65e0\\u6548"'
     assert old.count(marker)==1

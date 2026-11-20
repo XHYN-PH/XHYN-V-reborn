@@ -85,16 +85,18 @@ helper_classes=args.classes or WORK/'build/classes'
 classpath=[str(classes),str(helper_classes),str(converted),str(TOOLS/'android.jar')]+classpath
 classpath=os.pathsep.join(classpath)
 source=PACKAGE/'tests/ui/LauncherUiChecks.java'
+sdl_test=PACKAGE/'tests/ui/SdlRetryChecks.java'
 # Enjarify does not retain Java InnerClasses metadata. Use javac's own helper
 # classes for source type lookup only; execution below still uses translated DEX.
 compile_classpath=classpath
-run('compile',['javac','-encoding','UTF-8','-cp',compile_classpath,'-d',classes,source])
+run('compile',['javac','-encoding','UTF-8','-cp',compile_classpath,'-d',classes,source,sdl_test])
 command=['java','-Duser.home='+str(OUT/'test-home'),
          '-Drobolectric.dependency.repo.url=https://repo.maven.apache.org/maven2',
          '-Dxhyn.test.root='+str(OUT),'-Dxhyn.test.apk='+os.environ['XHYN_INPUT_APK'],
          '-Dxhyn.test.ini='+str(WORK/'decoded/assets/default-android.ini'),
          '-Dxhyn.test.translations='+str(PACKAGE/'translations.json'),'-Dxhyn.test.assets='+str(assets),
-         '-cp',classpath,'org.junit.runner.JUnitCore','com.gtavsource.android.LauncherUiChecks']
+         '-cp',classpath,'org.junit.runner.JUnitCore','com.gtavsource.android.LauncherUiChecks',
+         'com.gtavsource.android.SdlRetryChecks']
 cache=args.classpath_file.resolve().parent/'test-home';cache.mkdir(exist_ok=True)
 command[1]='-Duser.home='+str(cache)
 proxy=urllib.parse.urlparse(os.environ.get('HTTPS_PROXY',''))
@@ -108,6 +110,7 @@ output=run('android-view-checks',command)
     'framework':'Robolectric 4.14.1','enjarify_revision':'6364dfb30f7862873b84ec5fad1d1286c526ba0b',
     'translated_jar_sha256':hashlib.sha256(converted.read_bytes()).hexdigest(),
     'test_source_sha256':hashlib.sha256(source.read_bytes()).hexdigest(),
+    'sdl_test_sha256':hashlib.sha256(sdl_test.read_bytes()).hexdigest(),
     'scope':'Original patched launcher DEX translated for host Android-view execution; new helpers use the exact javac output fed to D8. Game/native GPU/network downloads are not exercised.',
     'jvm_only_adjustment':'TrainerBridge.Endpoint class version 52 for its original default no-op method; Android bytecode unchanged'
 },indent=2)+'\n')

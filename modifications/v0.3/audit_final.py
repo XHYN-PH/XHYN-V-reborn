@@ -16,7 +16,7 @@ def check(value,label):
     checks.append(label)
 def digest(data): return hashlib.sha256(data).hexdigest()
 def inventory(archive):
-    classes={};methods=set();references=[]
+    classes={};methods={};references=[]
     for name in archive.namelist():
         if not re.fullmatch(r'classes\d*\.dex',name): continue
         data=archive.read(name)
@@ -26,13 +26,27 @@ def inventory(archive):
         for c in dex.get_classes():
             check(c.get_name() not in classes,'Unique class '+c.get_name()); classes[c.get_name()]=c
             for m in c.get_methods():
-                methods.add(c.get_name()+'->'+m.get_name()+m.get_descriptor().replace(' ',''))
+                methods[c.get_name()+'->'+m.get_name()+m.get_descriptor().replace(' ','')]=m
                 if m.get_code():
                     for instruction in m.get_instructions():
                         if instruction.get_name().startswith('invoke-'):
                             match=re.search(r'(L[^ ]+;)->([^ ]+)\(([^)]*)\)([^ ]+)',instruction.get_output())
                             if match: references.append((c.get_name(),''.join([match[1],'->',match[2],'(',match[3].replace(' ',''),')',match[4]])))
     return classes,methods,references
+
+def method_accessible(caller, owner, flags, classes):
+    if flags & 0x1 or caller == owner:
+        return True
+    if flags & 0x2:
+        return False
+    if caller.rsplit('/',1)[0] == owner.rsplit('/',1)[0]:
+        return True
+    if flags & 0x4:
+        while caller in classes:
+            caller = classes[caller].get_superclassname()
+            if caller == owner:
+                return True
+    return False
 
 with zipfile.ZipFile(original) as a,zipfile.ZipFile(final) as b,final.open('rb') as stream:
     check(b.testzip() is None,'ZIP CRCs')
@@ -110,7 +124,7 @@ with zipfile.ZipFile(original) as a,zipfile.ZipFile(final) as b,final.open('rb')
         for color in [(0,0,0,255),(255,255,255,255)]:
             check(Image.alpha_composite(Image.new('RGBA',logo.size,color),logo).tobytes()==Image.alpha_composite(Image.new('RGBA',icon.size,color),icon).tobytes(),'Icon appearance '+name+str(color))
     oc,om,unused=inventory(a);nc,nm,refs=inventory(b)
-    check(set(oc)<=set(nc),'All original classes retained');check(om<=nm,'All original method signatures retained')
+    check(set(oc)<=set(nc),'All original classes retained');check(om.keys()<=nm.keys(),'All original method signatures retained')
     def instructions(cls):
         return {method.get_name()+method.get_descriptor():[(insn.get_name(),insn.get_output()) for insn in method.get_instructions()]
                 for method in cls.get_methods() if method.get_code()}
@@ -121,16 +135,19 @@ with zipfile.ZipFile(original) as a,zipfile.ZipFile(final) as b,final.open('rb')
         key='Lcom/gtavsource/android/'+name+';'
         check(len(nc[key].get_methods())>=len(oc[key].get_methods()),'Original class implementation '+name)
     for target in json.loads((R/'reports/hook-targets.json').read_text()).values(): check(target in nm,'English presentation target '+target)
+    helper_prefix='Lcom/gtavsource/android/Xhyn'
     for caller,target in refs:
-        if target.startswith('Lcom/gtavsource/android/Xhyn') or caller.startswith('Lcom/gtavsource/android/Xhyn') and target.startswith('Lcom/gtavsource/android/'):
-            owner,signature=target.split('->',1)
-            resolved=target in nm
-            while not resolved and owner in nc:
+        owner,signature=target.split('->',1)
+        if owner.startswith(helper_prefix) or caller.startswith(helper_prefix) and owner in nc:
+            resolved=nm.get(target)
+            while resolved is None and owner in nc:
                 owner=nc[owner].get_superclassname()
-                resolved=owner+'->'+signature in nm
-            # javac resolves inherited platform methods against the pinned Android API jar.
-            resolved=resolved or owner.startswith(('Landroid/','Ljava/'))
-            check(resolved,'Helper and app method linkage '+target)
+                resolved=nm.get(owner+'->'+signature)
+            # Inherited platform methods resolve against the pinned Android API.
+            check(resolved is not None or owner.startswith(('Landroid/','Ljava/')),'Helper and app method linkage '+target)
+            if resolved is not None:
+                check(method_accessible(caller,owner,resolved.get_access_flags(),nc),
+                      'Accessible helper call '+caller+' -> '+target)
     check('Lcom/gtavsource/android/XhynV02Menu;->about(Landroid/app/Activity;)V' in nm,'About System page packaged')
     check('https://t.me/xhynv' in str(nc['Lcom/gtavsource/android/XhynV02Menu;'].get_fields()) or any(b'https://t.me/xhynv' in b.read(n) for n in b.namelist() if re.fullmatch(r'classes\d*\.dex',n)),'Telegram link packaged')
 
@@ -154,10 +171,13 @@ check(resources(A)==resources(B),'Original public resource IDs retained')
 ui_model=json.loads((R/'reports/launcher-ui-model.json').read_text())
 check(ui_model['result']=='PASS','Prepackage Android-view regression suite passed')
 check(ui_model['test_source_sha256']==digest((Path(__file__).resolve().parent/'tests/ui/LauncherUiChecks.java').read_bytes()),'UI suite matches the published test source')
+sdl_test_sha256=digest((Path(__file__).resolve().parent/'tests/ui/SdlRetryChecks.java').read_bytes())
+check(ui_model['sdl_test_sha256']==sdl_test_sha256,'SDL retry test ran before packaging')
 check((R/'reports/launcher-structure-checks.txt').read_text().startswith('PASS '),'Constructor and launcher-route checks passed')
 startup=json.loads((R/'apk-startup-tests/result.json').read_text())
 check(startup['result']=='PASS' and startup['apk_sha256']==digest(final.read_bytes()),'Real Application startup uses this final APK')
 check(startup['test_sha256']==digest((Path(__file__).resolve().parent/'tests/ui/ApkStartupChecks.java').read_bytes()),'Startup suite matches the published test source')
+check(startup['sdl_test_sha256']==sdl_test_sha256,'SDL retry test ran against the final signed APK')
 check(startup['jvm_compatibility_source_sha256']==digest((Path(__file__).resolve().parent/'tests/ui/EnjarifyJvmCompatibility.java').read_bytes()),'Host JVM compatibility matches the executed source')
 result={'result':'PASS','checks':len(checks),'file':str(final),'bytes':final.stat().st_size,'sha256':digest(final.read_bytes()),'metadata':meta,'original_classes':len(oc),'final_classes':len(nc),'original_native_libraries':len(oldlibs),'dictionary_entries':len(dictionary),'device_gameplay_tested':False,'android_ui_execution_tested':False,'host_android_view_tests':True,'host_application_startup_tests':True,'startup_android_apis':[30,35],'physical_gpu_probe_tested':False,'scope':'Signed artifact including raw-path startup artwork, real Application and launcher startup on host Android APIs 30/35, exact native modifications, preserved features, helper linkage and host/ARM64 checks; not physical-device/gameplay qualification'}
 (R/'reports/final-audit.json').write_text(json.dumps(result,indent=2)+'\n')

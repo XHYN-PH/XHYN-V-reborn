@@ -26,6 +26,7 @@ for old in list(ui)+list(canvas):
  elif method=='setContentText('+CS+')Landroid/app/Notification$Builder;':add(old,'notificationText','(Landroid/app/Notification$Builder;'+CS+')Landroid/app/Notification$Builder;')
  elif old=='Landroid/graphics/Canvas;->drawText(Ljava/lang/String;FFLandroid/graphics/Paint;)V':add(old,'draw','(Landroid/graphics/Canvas;Ljava/lang/String;FFLandroid/graphics/Paint;)V')
  elif old in ['Landroid/graphics/Paint;->measureText(Ljava/lang/String;)F','Landroid/text/TextPaint;->measureText(Ljava/lang/String;)F']:add(old,'measure','(Landroid/graphics/Paint;Ljava/lang/String;)F')
+add('Lcom/gtavsource/android/MenuDialogBuilder;->setTitle('+CS+')'+B,'title','('+B+CS+')'+B)
 counts=collections.Counter();original=[]
 for base in D.glob('smali*'):
  for p in base.rglob('*.smali'):
