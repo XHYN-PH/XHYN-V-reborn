@@ -48,7 +48,9 @@ XHYN V 0.1 also uses ARM64 ELF shared libraries, with SDL's `nativeRunMain` as t
 
 ## What source is included?
 
-The current [0.2 modification layer](../modifications/v0.2) contains Java/C helpers, probe shaders, translations, guarded binary/UI patches, a complete build driver and checks for the 1.7.26 runtime. New code is MIT licensed under its [defined scope](../modifications/v0.2/PROVENANCE.md). It does not compile the original engine. See [implementation status](../modifications/v0.2/STATUS.md) for testing limits.
+The current 0.3 modification layer contains the launcher and configuration helpers, native reporting and graphics probe code, translations, patches and build tools for the 1.7.57 runtime. New code is MIT licensed within the documented scope. [Hotfix 1 source](https://github.com/XHYN-PH/XHYN-V-reborn/tree/v0.3-preview3-hotfix1/modifications/v0.3) · [Provenance and license scope](https://github.com/XHYN-PH/XHYN-V-reborn/blob/v0.3-preview3-hotfix1/modifications/v0.3/PROVENANCE.md)
+
+The earlier [0.2 modification layer](../modifications/v0.2) targets the 1.7.26 runtime. It includes Java/C helpers, probe shaders, translations, guarded binary/UI patches and a build driver. [Implementation status](../modifications/v0.2/STATUS.md)
 
 The earlier [1.7.4 English modification layer](../modifications/english-1.7.4) includes four new Java helpers, guarded binary/UI patches, a build driver, translation data and host/native/package tests. Its new helper and tooling code is MIT licensed under the [documented scope](../modifications/english-1.7.4/PROVENANCE.md). Our guarded patch workflow targets an exact base build, identified by its SHA-256; it does not compile the complete original game engine. The [1.7.4 verification records](../verification/english-1.7.4) distinguish checks performed from untested Android behavior.
 

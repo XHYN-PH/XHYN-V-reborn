@@ -6,7 +6,7 @@
 
 **[Download XHYN V 0.3 Preview 3 Hotfix 1](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.3-preview3-hotfix1)** · **[Telegram](https://t.me/xhynv)** · **[YouTube](https://youtube.com/@xhyn_ph)** · **[Buy GTA V](https://store.rockstargames.com/game/buy-gta-v)**
 
-> **Untested development preview:** gameplay, live multiplayer and Bridge VPN behavior have not been verified on physical devices. Compatibility and performance vary; native crash fixes remain incomplete.
+> **Development preview.** Gameplay, GPU compatibility, and live multiplayer still need testing on phones.
 
 ## What does this project provide?
 
@@ -45,7 +45,7 @@ XHYN V is therefore **a native ARM64 Android port with graphics API translation 
 
 ## 0.3 Preview 3
 
-- Fixed an SDL startup failure that could occur when retrying a game launch.
+- Added SDL launch retry handling. Hotfix 1 repairs the startup regression introduced in Preview 3.
 - Startup reports show the first error and the last stage reached.
 - Recording History shows frame timings, long gaps, memory use, and screen refresh when available.
 - Refresh matching returns control to Android when the option is off or the frame rate is uncapped.
@@ -64,7 +64,7 @@ XHYN V is therefore **a native ARM64 Android port with graphics API translation 
 
 ## 0.3 feature changelog
 
-The following base features and XHYN modifications were introduced in Preview 1 and carried forward into Preview 3.
+The following base features and XHYN modifications were introduced in Preview 1 and carried forward into Preview 3 Hotfix 1.
 
 ### What's new in the 1.7.57 base
 
@@ -96,13 +96,13 @@ This is custom Story Mode/free-roam multiplayer. Mission progress is not shared.
 - Added the separate **XHYN V Bridge 0.1.0** companion: English UI, native network messages, notifications and widgets; XHYN branding; compatible Astral room links; and connection tips. The networking backend is preserved. Room credentials are omitted from the server-start log.
 - Kept the game's existing application ID and signing key so this preview can update the previous English edition. Bridge has its own application ID and installs separately.
 
-**Untested gameplay preview:** physical-device gameplay, GPU behavior, live two-device multiplayer and Bridge VPN connections have not been tested. Expect possible crashes, disconnects or synchronization problems. The [detailed implementation status](https://github.com/XHYN-PH/XHYN-V-reborn/blob/v0.3-preview3-hotfix1/modifications/v0.3/STATUS.md) explains what changed and which native issues remain open.
-
 ## Requirements and installation
 
 - **Android 11 or newer**, an **ARM64** device and a compatible **Vulkan** driver.
 - Your own compatible **GTA V Legacy** files, including English text and fonts. The project's documented baseline is **1.61 / build 2699**.
 - Enough storage for the game, caches and imported content.
+
+Keep frame generation off on phones that use **16 KB memory pages**. The bundled frame-generation libraries still include 4 KB-aligned binaries. [Android page-size guide](https://developer.android.com/guide/practices/page-sizes)
 
 1. Download and install the APK from the [release page](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.3-preview3-hotfix1).
 2. Grant the requested file access and select the folder containing `common.rpf`, `x64` and `update`.
@@ -140,7 +140,7 @@ Version 0.3 Preview 3 Hotfix 1 is a **development prerelease**, using the same a
 
 ### Play remotely with XHYN V Bridge
 
-1. Install **XHYN V Bridge** from the [Bridge download](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.3-preview2) on each phone. It is a separate app from the game.
+1. Install the separate **XHYN V Bridge 0.1.0** app on each phone. [Download Bridge APK](https://github.com/XHYN-PH/XHYN-V-reborn/releases/download/v0.3-preview2/XHYN-V-Bridge-0.1.0.apk)
 2. Create/share or import the **same Bridge room/network** on every phone. Use matching network credentials and compatible enabled server settings.
 3. Tap **Connect**, accept Android's VPN request and wait until Bridge shows a connected state and a **virtual IPv4 address**. Keep Bridge running when you switch to the game.
 4. In XHYN V, the host opens **Create room** and enables **Virtual LAN**. Other players enable it on **Join room** too.

@@ -10,7 +10,7 @@
 
 ## 0.3 Preview 3 — 19 November 2026
 
-- Fixed an SDL startup failure that could occur when retrying a game launch.
+- Added SDL launch retry handling. Hotfix 1 repairs the startup regression introduced in Preview 3.
 - Startup reports show the first error and the last stage reached.
 - Recording History shows frame timings, long gaps, memory use, and screen refresh when available.
 - Refresh matching returns control to Android when the option is off or the frame rate is uncapped.
