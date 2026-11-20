@@ -1,10 +1,10 @@
 # Modification-source layout
 
-## 0.3 Preview 3 Hotfix 1
+## 0.3 Preview 4
 
-The current build uses the exact **1.7.57** Android base. The guide lists the required input checksum, pinned tools, build command, and signing options. [Hotfix 1 build guide](https://github.com/XHYN-PH/XHYN-V-reborn/blob/v0.3-preview3-hotfix1/modifications/v0.3/README.md)
+The current build uses the exact **1.7.57** Android base. The guide lists the required input checksum, pinned tools, build command, and signing options. [Preview 4 build guide](https://github.com/XHYN-PH/XHYN-V-reborn/blob/v0.3-preview4/modifications/v0.3/README.md)
 
-The release page includes the public modification source and its checksums. A signed update needs the project's existing release certificate and private signing key. [Hotfix 1 release](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.3-preview3-hotfix1)
+The release page includes the public modification source and its checksums. A signed update needs the project's existing release key. [Preview 4 release](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.3-preview4)
 
 ## 0.2
 

@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3 Preview 4 — 20 November 2026
+
+- Added loaded and next-launch graphics status, cancelable driver ZIP imports, and individual shader cache controls.
+- Added touch alignment guides and a controller test.
+- Added LAN room and mod compatibility information and outgoing traffic measurement. Fixed repeated disconnect requests while a room is closing.
+- Fixed a launch failure when diagnostics copied large settings files and reduced repeated startup work.
+- Added optional Android sustained performance mode and clearer Direct3D feature-level errors.
+
+[Preview 4 release](https://github.com/XHYN-PH/XHYN-V-reborn/releases/tag/v0.3-preview4)
+
 ## 0.3 Preview 3 Hotfix 1 — 20 November 2026
 
 - Fixed the Preview 3 startup crash that could close the game as soon as it launches.

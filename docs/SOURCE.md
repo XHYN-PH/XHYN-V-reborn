@@ -48,7 +48,7 @@ XHYN V 0.1 also uses ARM64 ELF shared libraries, with SDL's `nativeRunMain` as t
 
 ## What source is included?
 
-The current 0.3 modification layer contains the launcher and configuration helpers, native reporting and graphics probe code, translations, patches and build tools for the 1.7.57 runtime. New code is MIT licensed within the documented scope. [Hotfix 1 source](https://github.com/XHYN-PH/XHYN-V-reborn/tree/v0.3-preview3-hotfix1/modifications/v0.3) · [Provenance and license scope](https://github.com/XHYN-PH/XHYN-V-reborn/blob/v0.3-preview3-hotfix1/modifications/v0.3/PROVENANCE.md)
+The current 0.3 modification layer contains the launcher and configuration helpers, native reporting and graphics probe code, translations, patches and build tools for the 1.7.57 runtime. New code is MIT licensed within the documented scope. [Preview 4 source](https://github.com/XHYN-PH/XHYN-V-reborn/tree/v0.3-preview4/modifications/v0.3) · [Provenance and license scope](https://github.com/XHYN-PH/XHYN-V-reborn/blob/v0.3-preview4/modifications/v0.3/PROVENANCE.md)
 
 The earlier [0.2 modification layer](../modifications/v0.2) targets the 1.7.26 runtime. It includes Java/C helpers, probe shaders, translations, guarded binary/UI patches and a build driver. [Implementation status](../modifications/v0.2/STATUS.md)
 
